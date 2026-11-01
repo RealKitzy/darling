@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOME // CODE:002 — Portal Zero Two</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="home-body">
+  <!-- Animated Sakura & HUD Particle Canvas -->
+  <canvas id="sakura-canvas" aria-hidden="true"></canvas>
+
+  <!-- Subtle Scanline & Vignette Overlay -->
+  <div class="hud-overlay" aria-hidden="true"></div>
+
+  <!-- ========================================================================
+       LANGUAGE SELECTION GATE (SHOWN BEFORE LOADING HOME CONTENT)
+       ======================================================================== -->
+  <div id="lang-gate-overlay" class="lang-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="lang-gate-title">
+    <div class="franxx-card lang-gate-card">
+      <span class="corner corner-tl"></span>
+      <span class="corner corner-tr"></span>
+      <span class="corner corner-bl"></span>
+      <span class="corner corner-br"></span>
+
+      <div class="lang-gate-inner">
+        <div class="emblem-ring lang-emblem">
+          <svg viewBox="0 0 64 64" width="38" height="38" fill="none">
+            <path d="M16 44C13 30 9 18 5 11C14 16 22 25 25 39" fill="#ff2a6d"/>
+            <path d="M48 44C51 30 55 18 59 11C50 16 42 25 39 39" fill="#ff2a6d"/>
+            <rect x="13" y="38" width="38" height="5" rx="2.5" fill="#f8f9fa"/>
+            <circle cx="32" cy="40.5" r="4" fill="#00f0ff"/>
+          </svg>
+        </div>
+
+        <span class="sync-complete-tag">SYSTEM INITIALIZATION // CODE:002</span>
+        <h1 class="lang-gate-title" id="lang-gate-title">
+          SELECIONE O IDIOMA <span class="title-accent">/ LANGUAGE</span>
+        </h1>
+        <p class="lang-gate-subtitle">
+          Antes de inicializar o painel da <strong>Strelizia</strong>, escolha o idioma da interface:<br />
+          <span>Before loading the cockpit interface, choose your preferred language:</span>
+        </p>
+
+        <div class="lang-choices-grid">
+          <button type="button" class="lang-choice-btn" data-lang="pt">
+            <span class="lang-flag">🇧🇷</span>
+            <div class="lang-choice-text">
+              <strong>Português (BR)</strong>
+              <span>Carregar portal em Português</span>
+            </div>
+            <span class="lang-code-tag">PT-BR</span>
+          </button>
+
+          <button type="button" class="lang-choice-btn" data-lang="en">
+            <span class="lang-flag">🇺🇸</span>
+            <div class="lang-choice-text">
+              <strong>English (US)</strong>
+              <span>Load portal in English</span>
+            </div>
+            <span class="lang-code-tag teal">EN-US</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MAIN HOME CONTENT (HIDDEN UNTIL LANGUAGE IS SELECTED)
+       ======================================================================== -->
+  <div id="home-app-wrapper" class="home-app-wrapper pre-load">
+    <!-- Top HUD Navigation Bar -->
+    <header class="hud-topbar home-navbar">
+      <div class="hud-brand">
+        <div class="nav-emblem">
+          <svg viewBox="0 0 64 64" width="26" height="26" fill="none">
+            <path d="M16 44C13 30 9 18 5 11C14 16 22 25 25 39" fill="#ff2a6d"/>
+            <path d="M48 44C51 30 55 18 59 11C50 16 42 25 39 39" fill="#ff2a6d"/>
+            <rect x="13" y="38" width="38" height="5" rx="2.5" fill="#f8f9fa"/>
+            <circle cx="32" cy="40.5" r="4" fill="#00f0ff"/>
+          </svg>
+        </div>
+        <span class="status-dot"></span>
+        <span class="nav-title">ZERO TWO <span class="title-accent">002</span></span>
+        <span class="hud-divider">/</span>
+        <span class="hud-mono accent-teal" data-i18n="navPortalTag">HOME PORTAL</span>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hud-nav-links" aria-label="Navegação Principal">
+        <button type="button" class="nav-tab active" data-target="all" data-i18n="navOverview">Visão Geral</button>
+        <button type="button" class="nav-tab" data-target="episodes-section" data-i18n="navEpisodes">Episódios</button>
+        <button type="button" class="nav-tab" data-target="squad-section" data-i18n="navSquad">Esquadrão 13</button>
+        <button type="button" class="nav-tab" data-target="terminal-section" data-i18n="navSession">Sessão Hash</button>
+        <a href="cade-voce.html" class="nav-tab nav-link-special" data-i18n="navWhereAreYou">📍 Cadê você?</a>
+      </nav>
+
+      <!-- Right Controls & User Profile -->
+      <div class="hud-controls">
+        <button type="button" id="switch-lang-btn" class="hud-pill-btn" title="Trocar Idioma / Switch Language">
+          <span id="current-lang-badge">🇧🇷 PT-BR</span>
+        </button>
+
+        <button type="button" id="theme-mode-btn" class="hud-pill-btn" title="Alternar Modo">
+          <span class="pill-indicator"></span>
+          <span id="theme-mode-label">MODO: SAKURA</span>
+        </button>
+
+        <button type="button" id="petals-toggle-btn" class="hud-pill-btn active" title="Ativar/Desativar pétalas">
+          <span id="petals-btn-label">🌸 PÉTALAS: ON</span>
+        </button>
+
+        <div class="user-hud-pill" title="Piloto Conectado">
+          <span class="user-dot"></span>
+          <span class="hud-mono" id="nav-user-email">darling@franxx</span>
+        </div>
+
+        <button type="button" id="logout-home-btn" class="hud-pill-btn logout-pill" title="Encerrar sessão">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span data-i18n="navLogout">SAIR</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Home Container -->
+    <main class="home-container">
+      <!-- HERO WELCOME BANNER -->
+      <section class="home-hero-card">
+        <span class="corner corner-tl"></span>
+        <span class="corner corner-tr"></span>
+        <span class="corner corner-bl"></span>
+        <span class="corner corner-br"></span>
+
+        <div class="hero-banner-content">
+          <div class="hero-status-row">
+            <span class="sync-complete-tag" data-i18n="heroSyncBadge">CONEXÃO NEURAL ESTABELECIDA // CODE:002</span>
+            <span class="hash-badge" id="hero-hash-badge">HASH: 002-XXXXXX</span>
+          </div>
+
+          <h1 class="hero-welcome-title">
+            <span data-i18n="heroWelcomePrefix" class="welcome-prefix-text">Bem-vindo ao Cockpit,</span>
+            <span id="hero-user-name">DARLING</span>!
+          </h1>
+
+          <p class="hero-welcome-desc" id="hero-quote-text">
+            "Encontrei você, meu Darling. Os sistemas da <strong>Strelizia</strong> estão sincronizados em 100% e prontos para o voo."
+          </p>
+
+          <div class="hero-actions-row">
+            <button type="button" class="submit-btn hero-cta-btn" id="boost-sync-btn">
+              <span class="btn-glare"></span>
+              <span id="boost-btn-text">ATIVAR MODO STRELIZIA APUS</span>
+            </button>
+
+            <button type="button" class="secondary-hud-btn" id="cycle-quote-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 16h5v5"/>
+              </svg>
+              <span data-i18n="heroQuoteBtn">Nova Fala da Zero Two</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Decorative HUD Gauge inside Hero -->
+        <div class="hero-telemetry-orb">
+          <div class="orb-ring">
+            <div class="orb-inner">
+              <span class="orb-label" data-i18n="orbSyncLabel">SINCRONIA</span>
+              <strong class="orb-value" id="orb-sync-value">99.8%</strong>
+              <span class="orb-sub" id="orb-mode-status">STRELIZIA // ONLINE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIVE METRICS ROW -->
+      <section class="metrics-grid" aria-label="Telemetria em Tempo Real">
+        <article class="metric-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricMagmaLabel">ENERGIA DE MAGMA</span>
+            <span class="metric-tag teal" data-i18n="metricMagmaStatus">ESTÁVEL</span>
+          </div>
+          <strong class="metric-number" id="metric-magma">9,420 <small>GW</small></strong>
+          <div class="sync-bar-track">
+            <div class="sync-bar-fill" id="bar-magma" style="width: 92%;"></div>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricBpmLabel">FREQUÊNCIA CARDÍACA</span>
+            <span class="metric-tag pink" data-i18n="metricBpmStatus">SINCRONIZADA</span>
+          </div>
+          <strong class="metric-number" id="metric-bpm">118 <small>BPM</small></strong>
+          <div class="sync-bar-track">
+            <div class="sync-bar-fill" id="bar-bpm" style="width: 78%;"></div>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricUptimeLabel">TEMPO DE SESSÃO ATIVA</span>
+            <span class="metric-tag teal" data-i18n="metricUptimeTag">HASH VÁLIDO</span>
+          </div>
+          <strong class="metric-number" id="session-uptime">00:00</strong>
+          <span class="metric-subtext" data-i18n="metricUptimeSub">Autenticado via Hash</span>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricKlaxoLabel">ALERTA KLAXOSAUR</span>
+            <span class="metric-tag" data-i18n="metricKlaxoTag">NÍVEL ZERO</span>
+          </div>
+          <strong class="metric-number" data-i18n="metricKlaxoValue">SETOR 13 LIMPO</strong>
+          <span class="metric-subtext" data-i18n="metricKlaxoSub">Radar de Plantation 13 ativo</span>
+        </article>
+
+        <!-- CLICKABLE "CADÊ VOCÊ?" CARD -->
+        <a href="cade-voce.html" class="metric-card metric-card-interactive" id="where-are-you-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricWhereLabel">SINAL DE BUSCA // 002</span>
+            <span class="metric-tag pink pulse-tag" data-i18n="metricWhereTag">CHAMANDO</span>
+          </div>
+          <strong class="metric-number highlight-pink" data-i18n="metricWhereTitle">Cadê você ?</strong>
+          <span class="metric-subtext metric-cta-link">
+            <span data-i18n="metricWhereSub">Clique para rastrear sinal</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </span>
+        </a>
+      </section>
+
+      <!-- FEATURED ANIME EPISODES / ARCHIVES SECTION -->
+      <section class="home-section" id="episodes-section">
+        <div class="section-header">
+          <div>
+            <span class="sub-label" data-i18n="epSectionSub">ARQUIVO DE MEMÓRIAS // ANIME</span>
+            <h2 class="section-title" data-i18n="epSectionTitle">EPISÓDIOS EM DESTAQUE</h2>
+          </div>
+          <span class="hud-mono accent-teal">DARLING IN THE FRANXX // 24 EPS</span>
+        </div>
+
+        <div class="episodes-grid">
+          <article class="episode-card" data-ep="01">
+            <div class="ep-banner ep-1">
+              <span class="ep-badge">EP // 01</span>
+              <span class="ep-duration">24 MIN</span>
+            </div>
+            <div class="ep-body">
+              <h3 data-i18n="ep1Title">Sozinho e Solitário</h3>
+              <p data-i18n="ep1Desc">O primeiro encontro sob as cerejeiras entre Hiro (Code:016) e a misteriosa garota com chifres vermelhos, Zero Two.</p>
+              <button type="button" class="ep-play-btn" data-i18n="epPlayBtn">▶ Acessar Memória</button>
+            </div>
+          </article>
+
+          <article class="episode-card" data-ep="06">
+            <div class="ep-banner ep-6">
+              <span class="ep-badge">EP // 06</span>
+              <span class="ep-duration">24 MIN</span>
+            </div>
+            <div class="ep-body">
+              <h3 data-i18n="ep6Title">DARLING in the FRANXX</h3>
+              <p data-i18n="ep6Desc">Superando o limite da terceira viagem, Hiro e Zero Two despertam o verdadeiro poder das asas da Strelizia.</p>
+              <button type="button" class="ep-play-btn" data-i18n="epPlayBtn">▶ Acessar Memória</button>
+            </div>
+          </article>
+
+          <article class="episode-card" data-ep="13">
+            <div class="ep-banner ep-13">
+              <span class="ep-badge">EP // 13</span>
+              <span class="ep-duration">24 MIN</span>
+            </div>
+            <div class="ep-body">
+              <h3 data-i18n="ep13Title">A Fera e o Príncipe</h3>
+              <p data-i18n="ep13Desc">O livro ilustrado, a neve e a promessa de infância que uniu o destino dos dois muito antes da Plantation 13.</p>
+              <button type="button" class="ep-play-btn" data-i18n="epPlayBtn">▶ Acessar Memória</button>
+            </div>
+          </article>
+
+          <article class="episode-card" data-ep="15">
+            <div class="ep-banner ep-15">
+              <span class="ep-badge">EP // 15</span>
+              <span class="ep-duration">24 MIN</span>
+            </div>
+            <div class="ep-body">
+              <h3 data-i18n="ep15Title">Jian (Pássaro de Uma Asa)</h3>
+              <p data-i18n="ep15Desc">A reunião emocionante no cockpit na Grande Crevasse e a transformação carmesim da Strelizia.</p>
+              <button type="button" class="ep-play-btn" data-i18n="epPlayBtn">▶ Acessar Memória</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TWO-COLUMN BOTTOM: SQUAD 13 FRANXX UNITS + SESSION SECURITY TERMINAL -->
+      <div class="bottom-split-grid">
+        <!-- SQUAD 13 UNITS -->
+        <section class="home-section panel-card" id="squad-section">
+          <div class="section-header">
+            <div>
+              <span class="sub-label" data-i18n="squadSectionSub">HANGAR DE COMBATE</span>
+              <h2 class="section-title" data-i18n="squadSectionTitle">UNIDADES DO ESQUADRÃO 13</h2>
+            </div>
+          </div>
+
+          <div class="squad-list">
+            <div class="squad-item active-unit">
+              <div class="unit-info">
+                <span class="unit-code pink">CODE: 002 &amp; 016</span>
+                <strong>STRELIZIA</strong>
+                <span class="unit-pilots">Zero Two &amp; <span id="squad-pilot-name">Darling</span></span>
+              </div>
+              <div class="unit-status">
+                <span class="status-badge online" data-i18n="unitFlight">EM VOO // 100%</span>
+              </div>
+            </div>
+
+            <div class="squad-item">
+              <div class="unit-info">
+                <span class="unit-code teal">CODE: 015 &amp; 056</span>
+                <strong>DELPHINIUM</strong>
+                <span class="unit-pilots">Ichigo &amp; Goro</span>
+              </div>
+              <div class="unit-status">
+                <span class="status-badge standby" data-i18n="unitReady94">PRONTA // 94%</span>
+              </div>
+            </div>
+
+            <div class="squad-item">
+              <div class="unit-info">
+                <span class="unit-code">CODE: 390 &amp; 666</span>
+                <strong>ARGENTEA</strong>
+                <span class="unit-pilots">Miku &amp; Zorome</span>
+              </div>
+              <div class="unit-status">
+                <span class="status-badge standby" data-i18n="unitReady89">PRONTA // 89%</span>
+              </div>
+            </div>
+
+            <div class="squad-item">
+              <div class="unit-info">
+                <span class="unit-code">CODE: 556 &amp; 214</span>
+                <strong>GENISTA</strong>
+                <span class="unit-pilots">Kokoro &amp; Mitsuru</span>
+              </div>
+              <div class="unit-status">
+                <span class="status-badge standby">HANGAR // 86%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AUTHENTICATION & HASH CREDENTIALS TERMINAL -->
+        <section class="home-section panel-card" id="terminal-section">
+          <div class="section-header">
+            <div>
+              <span class="sub-label" data-i18n="termSectionSub">CREDENCIAIS CRIPTOGRÁFICAS</span>
+              <h2 class="section-title" data-i18n="termSectionTitle">REGISTRO DA SESSÃO HASH</h2>
+            </div>
+          </div>
+
+          <div class="terminal-box">
+            <div class="terminal-row">
+              <span class="t-key" data-i18n="termEmailKey">E-mail:</span>
+              <strong class="t-val-mono" id="term-email">darling@squad13.franxx</strong>
+            </div>
+            <div class="terminal-row">
+              <span class="t-key" data-i18n="termHashKey">Hash Utilizado:</span>
+              <strong class="t-val-mono teal" id="term-hash">002-XXXXXX-XXXXXX-XX00</strong>
+            </div>
+            <div class="terminal-row">
+              <span class="t-key" data-i18n="termTimeKey">Horário do Login:</span>
+              <strong class="t-val-mono" id="term-time">--:--:--</strong>
+            </div>
+            <div class="terminal-row">
+              <span class="t-key" data-i18n="termProtoKey">Protocolo:</span>
+              <strong class="t-val-mono pink" data-i18n="termProtoVal">FRANXX-SHA002 (40s TTL VERIFICADO)</strong>
+            </div>
+          </div>
+
+          <div class="terminal-log" id="terminal-log"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="home.js"></script>
+</body>
+</html>

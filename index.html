@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CODE:002 // Zero Two — Portal de Sincronização</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Animated Sakura & HUD Particle Canvas -->
+  <canvas id="sakura-canvas" aria-hidden="true"></canvas>
+
+  <!-- Subtle Scanline & Vignette Overlay -->
+  <div class="hud-overlay" aria-hidden="true"></div>
+
+  <!-- Top HUD Navigation / Status Bar -->
+  <header class="hud-topbar">
+    <div class="hud-brand">
+      <span class="status-dot"></span>
+      <span class="hud-mono">PLANTATION 13 // SQUAD 13</span>
+      <span class="hud-divider">/</span>
+      <span class="hud-mono accent-teal">UNIT: STRELIZIA</span>
+    </div>
+
+    <div class="hud-controls">
+      <button type="button" id="theme-mode-btn" class="hud-pill-btn" title="Alternar entre Modo Sakura e Modo Rampage (Klaxosaur)">
+        <span class="pill-indicator"></span>
+        <span id="theme-mode-label">MODO: SAKURA</span>
+      </button>
+      <button type="button" id="petals-toggle-btn" class="hud-pill-btn active" title="Ativar/Desativar pétalas de cerejeira">
+        <span>🌸 PÉTALAS: ON</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Centered Container -->
+  <main class="login-stage">
+    <section class="franxx-card" aria-label="Portal de Login Zero Two">
+      <!-- Decorative HUD Corner Brackets -->
+      <span class="corner corner-tl"></span>
+      <span class="corner corner-tr"></span>
+      <span class="corner corner-bl"></span>
+      <span class="corner corner-br"></span>
+
+      <div class="form-panel">
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="auth-view active">
+          <div class="form-header">
+            <div class="emblem-header">
+              <div class="emblem-ring">
+                <svg viewBox="0 0 64 64" width="34" height="34" fill="none">
+                  <path d="M16 44C13 30 9 18 5 11C14 16 22 25 25 39" fill="#ff2a6d"/>
+                  <path d="M48 44C51 30 55 18 59 11C50 16 42 25 39 39" fill="#ff2a6d"/>
+                  <rect x="13" y="38" width="38" height="5" rx="2.5" fill="#f8f9fa"/>
+                  <circle cx="32" cy="40.5" r="4" fill="#00f0ff"/>
+                </svg>
+              </div>
+              <div class="header-tag-group">
+                <span class="sub-label">AUTENTICAÇÃO DE PILOTO</span>
+                <h1 class="main-title">ZERO TWO <span class="title-accent">002</span></h1>
+              </div>
+              <div class="xx-crest" title="Símbolo FRANXX XX">
+                <svg viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 6L28 34M28 6L8 34" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M36 6L56 34M56 6L36 34" stroke="#00f0ff" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <p class="form-subtitle">
+              Solicite um <strong>Hash de Sincronização</strong> aleatório e informe seu e-mail para iniciar a conexão neural com a <strong>Strelizia</strong>.
+            </p>
+          </div>
+
+          <!-- Random Hash Generator Module -->
+          <div class="hash-generator-box" id="hash-generator-box">
+            <div class="hash-box-header">
+              <span class="hud-mono">GERADOR DE CHAVE NEURAL</span>
+              <div class="hash-meta-right">
+                <span class="hash-timer hidden" id="hash-timer" title="Tempo restante de validade do Hash">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <strong id="hash-timer-value">40s</strong>
+                </span>
+                <span class="hash-status" id="hash-status">AGUARDANDO SOLICITAÇÃO</span>
+              </div>
+            </div>
+
+            <div class="hash-display-row">
+              <div class="hash-code-output" id="generated-hash-display" title="Hash gerado">
+                <span class="hash-placeholder">••••-••••••••-••••••••-•••</span>
+              </div>
+
+              <button
+                type="button"
+                id="copy-hash-btn"
+                class="hash-action-btn copy-btn hidden"
+                title="Copiar Hash"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-btn-text">Copiar</span>
+              </button>
+
+              <button type="button" id="request-hash-btn" class="hash-action-btn generate-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+                <span id="request-hash-label">Solicitar Hash</span>
+              </button>
+            </div>
+
+            <!-- 40s Countdown Bar -->
+            <div class="hash-timer-track hidden" id="hash-timer-track">
+              <div class="hash-timer-fill" id="hash-timer-fill"></div>
+            </div>
+          </div>
+
+          <form id="login-form" novalidate>
+            <!-- E-mail Field -->
+            <div class="input-group">
+              <div class="label-row">
+                <label for="darling-email">E-mail</label>
+                <span class="field-code">ID // 016</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
+                <input
+                  type="email"
+                  id="darling-email"
+                  name="darlingEmail"
+                  placeholder="Ex: darling@squad13.franxx"
+                  autocomplete="email"
+                  required
+                />
+              </div>
+              <span class="error-msg" id="email-error"></span>
+            </div>
+
+            <!-- Hash Input Field -->
+            <div class="input-group">
+              <div class="label-row">
+                <label for="darling-hash">CÓDIGO HASH ALEATÓRIO</label>
+                <span class="field-code">HASH // XX-002</span>
+              </div>
+              <div class="input-wrapper">
+                <span class="input-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="4" y1="9" x2="20" y2="9"/>
+                    <line x1="4" y1="15" x2="20" y2="15"/>
+                    <line x1="10" y1="3" x2="8" y2="21"/>
+                    <line x1="16" y1="3" x2="14" y2="21"/>
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  id="darling-hash"
+                  name="darlingHash"
+                  class="mono-input"
+                  placeholder="Cole ou digite o Hash solicitado acima"
+                  autocomplete="off"
+                  spellcheck="false"
+                  required
+                />
+              </div>
+              <span class="error-msg" id="hash-error"></span>
+            </div>
+
+            <!-- Live Sync Gauge -->
+            <div class="sync-meter-box">
+              <div class="sync-meter-header">
+                <span class="hud-mono">TAXA DE SINCRONIZAÇÃO FRANXX</span>
+                <span class="sync-value" id="sync-percent">0.0%</span>
+              </div>
+              <div class="sync-bar-track">
+                <div class="sync-bar-fill" id="sync-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submit-btn">
+              <span class="btn-glare"></span>
+              <span class="btn-text">VALIDAR HASH E CONECTAR</span>
+              <span class="btn-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <!-- SYNCHRONIZATION SUCCESS VIEW (Hidden until login) -->
+        <div id="success-view" class="auth-view" aria-live="polite">
+          <div class="success-badge-pulse">
+            <svg viewBox="0 0 120 60" width="96" height="48" fill="none">
+              <path d="M22 48C18 30 10 15 4 6C16 12 28 24 34 42" fill="#ff2a6d"/>
+              <path d="M98 48C102 30 110 15 116 6C104 12 92 24 86 42" fill="#ff2a6d"/>
+              <rect x="18" y="41" width="84" height="8" rx="4" fill="#ffffff"/>
+              <circle cx="60" cy="45" r="5" fill="#00f0ff"/>
+            </svg>
+          </div>
+          <span class="sync-complete-tag">HASH AUTENTICADO // SINCRONIA 100%</span>
+          <h2 class="success-title">BEM-VINDO DE VOLTA, <span id="logged-darling-name">DARLING</span>!</h2>
+          <p class="success-desc">
+            Seu Hash criptográfico foi validado pelos sistemas da <strong>Strelizia (Code:002)</strong>. Conexão neural estabelecida.
+          </p>
+
+          <div class="telemetry-grid">
+            <div class="telemetry-card">
+              <span class="t-label">E-mail</span>
+              <strong class="t-val" id="telemetry-email">hiro@squad13</strong>
+            </div>
+            <div class="telemetry-card">
+              <span class="t-label">HASH CONECTADO</span>
+              <strong class="t-val teal" id="telemetry-hash">002-XXXX</strong>
+            </div>
+            <div class="telemetry-card">
+              <span class="t-label">UNIDADE FRANXX</span>
+              <strong class="t-val pink">STRELIZIA (002)</strong>
+            </div>
+          </div>
+
+          <button type="button" id="logout-btn" class="submit-btn secondary-btn">
+            <span>ENCERRAR CONEXÃO (LOGOUT)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

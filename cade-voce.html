@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CADÊ VOCÊ? // CODE:002 — Radar Neural Zero Two</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="home-body">
+  <!-- Animated Sakura & HUD Particle Canvas -->
+  <canvas id="sakura-canvas" aria-hidden="true"></canvas>
+
+  <!-- Subtle Scanline & Vignette Overlay -->
+  <div class="hud-overlay" aria-hidden="true"></div>
+
+  <!-- Top HUD Navigation Bar -->
+  <header class="hud-topbar home-navbar">
+    <div class="hud-brand">
+      <a href="home.html" class="hud-pill-btn back-home-btn" title="Voltar para a Home">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        <span data-i18n="backHomeBtn">Voltar para Home</span>
+      </a>
+
+      <span class="status-dot"></span>
+      <span class="nav-title">ZERO TWO <span class="title-accent">002</span></span>
+      <span class="hud-divider">/</span>
+      <span class="hud-mono accent-teal" data-i18n="pageTag">RADAR // CADÊ VOCÊ?</span>
+    </div>
+
+    <div class="hud-controls">
+      <button type="button" id="switch-lang-btn" class="hud-pill-btn" title="Trocar Idioma / Switch Language">
+        <span id="current-lang-badge">🇧🇷 PT-BR</span>
+      </button>
+
+      <button type="button" id="theme-mode-btn" class="hud-pill-btn" title="Alternar Modo">
+        <span class="pill-indicator"></span>
+        <span id="theme-mode-label">MODO: SAKURA</span>
+      </button>
+
+      <button type="button" id="petals-toggle-btn" class="hud-pill-btn active" title="Ativar/Desativar pétalas">
+        <span id="petals-btn-label">🌸 PÉTALAS: ON</span>
+      </button>
+
+      <div class="user-hud-pill" title="Piloto Conectado">
+        <span class="user-dot"></span>
+        <span class="hud-mono" id="nav-user-email">darling@franxx</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="home-container">
+    <!-- TOP HEADER BANNER -->
+    <section class="home-hero-card where-hero-card">
+      <span class="corner corner-tl"></span>
+      <span class="corner corner-tr"></span>
+      <span class="corner corner-bl"></span>
+      <span class="corner corner-br"></span>
+
+      <div class="hero-banner-content">
+        <div class="hero-status-row">
+          <span class="sync-complete-tag" data-i18n="beaconBadge">FREQUÊNCIA DE BUSCA NEURAL // CODE:002</span>
+          <span class="hash-badge" id="where-hash-badge">SINAL ATIVO</span>
+        </div>
+
+        <h1 class="hero-welcome-title">
+          <span data-i18n="whereMainTitle">Cadê você,</span> <span id="where-user-name">DARLING</span>?
+        </h1>
+
+        <p class="hero-welcome-desc" id="where-quote-display">
+          "Eu procurei por você em cada estação, em cada batalha e sob cada árvore de cerejeira... Me diga em qual coordenada você está, meu <strong>Darling</strong>!"
+        </p>
+
+        <div class="hero-actions-row">
+          <button type="button" class="submit-btn hero-cta-btn" id="ping-signal-btn">
+            <span class="btn-glare"></span>
+            <span id="ping-btn-text" data-i18n="pingBtnText">EMITIR SINAL DE LOCALIZAÇÃO</span>
+          </button>
+
+          <button type="button" class="secondary-hud-btn" id="confirm-here-btn">
+            <span>❤️</span>
+            <span data-i18n="confirmHereBtn">"Estou aqui, Zero Two!"</span>
+          </button>
+
+          <button type="button" class="secondary-hud-btn see-where-btn" id="see-where-btn">
+            <span>📍</span>
+            <span data-i18n="seeWhereBtn">Vê onde está</span>
+          </button>
+        </div>
+
+        <!-- Shareable Link Generator Box (Shown when clicking "Vê onde está") -->
+        <div class="share-link-box hidden" id="share-link-box">
+          <div class="share-link-header">
+            <span class="hud-mono accent-teal" data-i18n="shareBoxTitle">LINK DE LOCALIZAÇÃO GERADO</span>
+            <span class="hash-status ready" id="share-link-status" data-i18n="shareBoxReady">PRONTO PARA ENVIAR</span>
+          </div>
+          <p class="share-link-desc" data-i18n="shareBoxDesc">
+            Copie este link e envie. Assim que a pessoa abrir, a localização aparecerá em forma de escrita na tela:
+          </p>
+          <div class="hash-display-row">
+            <input
+              type="text"
+              id="generated-share-url"
+              class="share-url-input"
+              readonly
+              value=""
+              aria-label="Link gerado para compartilhar"
+            />
+            <button type="button" id="copy-share-url-btn" class="hash-action-btn copy-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copy-share-btn-text" data-i18n="copyLinkBtn">Copiar Link</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Written Location Output Banner (Shown when opening the shared link or locating) -->
+        <div class="written-location-card hidden" id="written-location-card" aria-live="polite">
+          <div class="written-loc-header">
+            <span class="status-dot"></span>
+            <span class="hud-mono accent-teal" data-i18n="writtenLocHeader">LOCALIZAÇÃO ATUAL EM FORMA DE ESCRITA</span>
+          </div>
+          <p class="written-loc-main" id="written-loc-main">
+            Obtendo endereço detalhado da localização...
+          </p>
+          <p class="written-loc-sub" id="written-loc-sub"></p>
+        </div>
+      </div>
+
+      <!-- Right Signal Telemetry Box -->
+      <div class="signal-telemetry-panel">
+        <div class="signal-stat-row">
+          <span class="hud-mono" data-i18n="labelTarget">ALVO RASTREADO</span>
+          <strong class="teal-val" id="target-pilot-code">CODE:016 // DARLING</strong>
+        </div>
+        <div class="signal-stat-row">
+          <span class="hud-mono" data-i18n="labelCoords">COORDENADAS ATUAIS</span>
+          <strong class="pink-val" id="current-coords-val">13.002° N, 16.016° E</strong>
+        </div>
+        <div class="signal-stat-row">
+          <span class="hud-mono" data-i18n="labelDistance">DISTÂNCIA NEURAL</span>
+          <strong class="white-val" id="current-dist-val">0.02 KM (MUITO PRÓXIMO)</strong>
+        </div>
+        <div class="signal-stat-row">
+          <span class="hud-mono" data-i18n="labelSignalStatus">STATUS DO ENCONTRO</span>
+          <strong class="teal-val" id="signal-lock-status">SINCRONIZANDO...</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE RADAR + SECTOR LOCATIONS -->
+    <div class="where-split-grid">
+      <!-- LEFT: LIVE ANIMATED RADAR SCANNER -->
+      <section class="panel-card radar-panel">
+        <div class="section-header">
+          <div>
+            <span class="sub-label" data-i18n="radarSub">SONAR HOLOGRÁFICO STRELIZIA</span>
+            <h2 class="section-title" data-i18n="radarTitle">RADAR DE RASTREAMENTO</h2>
+          </div>
+          <span class="metric-tag teal pulse-tag" id="radar-live-tag">SCANNING // 002</span>
+        </div>
+
+        <div class="radar-canvas-container">
+          <canvas id="radar-canvas" width="380" height="380"></canvas>
+          <div class="radar-overlay-hud">
+            <span class="radar-coord-tl">X: 002.16</span>
+            <span class="radar-coord-tr">Y: 99.8%</span>
+            <span class="radar-coord-bl" id="radar-sector-code">SEC // MISTILTEINN</span>
+            <span class="radar-coord-br">FRANXX-OS</span>
+          </div>
+        </div>
+
+        <p class="radar-hint" data-i18n="radarHint">
+          Clique no radar ou escolha um dos setores ao lado para sintonizar sua localização com a Zero Two.
+        </p>
+      </section>
+
+      <!-- RIGHT: SECTOR SELECTOR & TRANSMISSION REPLY -->
+      <section class="panel-card sectors-panel">
+        <div class="section-header">
+          <div>
+            <span class="sub-label" data-i18n="sectorsSub">PONTOS DE ENCONTRO</span>
+            <h2 class="section-title" data-i18n="sectorsTitle">ONDE VOCÊ ESTÁ AGORA?</h2>
+          </div>
+        </div>
+
+        <div class="sectors-list" id="sectors-list">
+          <button type="button" class="sector-card active" data-sector="0">
+            <div class="sector-icon">🌸</div>
+            <div class="sector-details">
+              <strong data-i18n="sec0Name">Jardim das Cerejeiras (Mistilteinn)</strong>
+              <span data-i18n="sec0Desc">Onde as pétalas caem e nos vimos pela primeira vez.</span>
+            </div>
+            <span class="sector-sync">98.4%</span>
+          </button>
+
+          <button type="button" class="sector-card" data-sector="1">
+            <div class="sector-icon">🌊</div>
+            <div class="sector-details">
+              <strong data-i18n="sec1Name">Lago da Plantation 13</strong>
+              <span data-i18n="sec1Desc">Águas cristalinas ondeZero Two mergulhou livremente.</span>
+            </div>
+            <span class="sector-sync">95.8%</span>
+          </button>
+
+          <button type="button" class="sector-card" data-sector="2">
+            <div class="sector-icon">❄️</div>
+            <div class="sector-details">
+              <strong data-i18n="sec2Name">Floresta Nevada (Promessa de Infância)</strong>
+              <span data-i18n="sec2Desc">Sob a neve e o livro ilustrado da Fera e do Príncipe.</span>
+            </div>
+            <span class="sector-sync">99.2%</span>
+          </button>
+
+          <button type="button" class="sector-card" data-sector="3">
+            <div class="sector-icon">🔥</div>
+            <div class="sector-details">
+              <strong data-i18n="sec3Name">Grande Crevasse (Cockpit Strelizia)</strong>
+              <span data-i18n="sec3Desc">No coração da batalha onde nossas almas se uniram.</span>
+            </div>
+            <span class="sector-sync">99.9%</span>
+          </button>
+
+          <button type="button" class="sector-card" data-sector="4">
+            <div class="sector-icon">✨</div>
+            <div class="sector-details">
+              <strong data-i18n="sec4Name">Árvore de Sakura Estelar (Eternidade)</strong>
+              <span data-i18n="sec4Desc">Além das estrelas, onde nossas almas sempre se reencontram.</span>
+            </div>
+            <span class="sector-sync">100%</span>
+          </button>
+        </div>
+
+        <!-- Direct Message / Signal Transmission Form -->
+        <form id="reply-signal-form" class="reply-signal-form">
+          <label for="darling-message-input" class="hud-mono" data-i18n="replyLabel">
+            ENVIAR RESPOSTA DIRETA PARA ZERO TWO:
+          </label>
+          <div class="reply-input-row">
+            <input
+              type="text"
+              id="darling-message-input"
+              placeholder="Ex: Estou te esperando sob as cerejeiras, Zero Two!"
+              maxlength="120"
+            />
+            <button type="submit" class="hash-action-btn generate-btn" data-i18n="replySendBtn">
+              Transmitir
+            </button>
+          </div>
+        </form>
+
+        <!-- Live Transmission Log -->
+        <div class="terminal-log" id="where-transmission-log"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script src="cade-voce.js"></script>
+</body>
+</html>

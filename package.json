@@ -1,0 +1,12 @@
+{
+  "name": "zero-two-portal",
+  "version": "1.0.0",
+  "description": "Zero Two (Code:002) Anime Portal - Ready for Railway",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
