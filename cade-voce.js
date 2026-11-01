@@ -237,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmHereBtn = document.getElementById('confirm-here-btn');
   const seeWhereBtn = document.getElementById('see-where-btn');
   const shareLinkBox = document.getElementById('share-link-box');
+  const shareLinkStatus = document.getElementById('share-link-status');
   const generatedShareUrl = document.getElementById('generated-share-url');
   const copyShareUrlBtn = document.getElementById('copy-share-url-btn');
   const copyShareBtnText = document.getElementById('copy-share-btn-text');
@@ -244,6 +245,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const writtenLocationCard = document.getElementById('written-location-card');
   const writtenLocMain = document.getElementById('written-loc-main');
   const writtenLocSub = document.getElementById('written-loc-sub');
+
+  let activeSignalCode = null;
+  let signalPollTimer = null;
+  const signalChannel =
+    typeof BroadcastChannel !== 'undefined'
+      ? new BroadcastChannel('zero_two_signal_channel')
+      : null;
 
   const sectorCards = document.querySelectorAll('.sector-card');
   const replySignalForm = document.getElementById('reply-signal-form');
@@ -332,29 +340,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Render a Written Location on Screen ---
+  function displayLocationCard(writtenAddress, lat, lon, sourceLabel, isFromRemoteLink = false) {
+    const dict = i18n[currentLang];
+    writtenLocationCard.classList.remove('hidden');
+    const prefixLabel = isFromRemoteLink
+      ? (currentLang === 'pt' ? '📍 Localização de quem clicou no link: ' : '📍 Location of the person who clicked the link: ')
+      : '📍 ';
+    writtenLocMain.textContent = `${prefixLabel}${writtenAddress}`;
+
+    const coordText =
+      lat && lon
+        ? `Latitude: ${Number(lat).toFixed(5)}° | Longitude: ${Number(lon).toFixed(5)}° (${sourceLabel})`
+        : sourceLabel;
+    writtenLocSub.textContent = coordText;
+
+    if (lat && lon) {
+      currentCoordsVal.textContent = `${Number(lat).toFixed(4)}°, ${Number(lon).toFixed(4)}°`;
+    }
+    signalLockStatus.textContent = dict.statusFound;
+    triggerRadarWave();
+    addLog('LOC', writtenAddress);
+    showToast(dict.toastLocSuccess);
+  }
+
   // --- Convert Coordinates / IP into Written Location ---
-  async function resolveWrittenLocation() {
+  async function resolveWrittenLocation(signalCodeToReport = null) {
     const dict = i18n[currentLang];
     writtenLocationCard.classList.remove('hidden');
     writtenLocMain.textContent = dict.writtenLocLoading;
     writtenLocSub.textContent = '';
 
-    // Helper to display final written text
-    const renderWrittenResult = (writtenAddress, lat, lon, sourceLabel) => {
-      writtenLocMain.textContent = `📍 ${writtenAddress}`;
-      const coordText =
-        lat && lon
-          ? `Latitude: ${Number(lat).toFixed(5)}° | Longitude: ${Number(lon).toFixed(5)}° (${sourceLabel})`
-          : sourceLabel;
-      writtenLocSub.textContent = coordText;
+    // Helper to display final written text and report back if opened via shared link
+    const renderWrittenResult = async (writtenAddress, lat, lon, sourceLabel) => {
+      displayLocationCard(writtenAddress, lat, lon, sourceLabel, Boolean(signalCodeToReport));
 
-      if (lat && lon) {
-        currentCoordsVal.textContent = `${Number(lat).toFixed(4)}°, ${Number(lon).toFixed(4)}°`;
+      if (signalCodeToReport) {
+        const payload = {
+          code: signalCodeToReport,
+          writtenAddress,
+          lat,
+          lon,
+          sourceLabel,
+          timestamp: Date.now()
+        };
+
+        // 1. Notify same-browser tabs (local testing via file:// or localhost)
+        try {
+          localStorage.setItem(`zeroTwoSignal_${signalCodeToReport}`, JSON.stringify(payload));
+        } catch {
+          // ignore storage quota errors
+        }
+        if (signalChannel) {
+          try {
+            signalChannel.postMessage(payload);
+          } catch {
+            // ignore
+          }
+        }
+
+        // 2. Notify server (Railway / Node backend) so the sender's device receives it
+        if (window.location.protocol.startsWith('http')) {
+          try {
+            await fetch(`/api/sinal/${encodeURIComponent(signalCodeToReport)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+          } catch {
+            // ignore if running without backend
+          }
+        }
       }
-      signalLockStatus.textContent = dict.statusFound;
-      triggerRadarWave();
-      addLog('LOC', writtenAddress);
-      showToast(dict.toastLocSuccess);
     };
 
     // Fallback via public IP geolocation API if GPS permission is denied or unavailable
@@ -365,12 +422,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         const parts = [data.city, data.region, data.country_name].filter(Boolean);
         const written = parts.length > 0
-          ? (currentLang === 'pt'
-              ? `Você está em ${parts.join(', ')}`
-              : `You are located in ${parts.join(', ')}`)
+          ? parts.join(', ')
           : (currentLang === 'pt' ? 'Localização aproximada identificada' : 'Approximate location identified');
-        renderWrittenResult(written, data.latitude, data.longitude, 'Rede / IP');
+        await renderWrittenResult(written, data.latitude, data.longitude, 'Rede / IP');
       } catch {
+        try {
+          const res2 = await fetch('https://ipwho.is/');
+          const data2 = await res2.json();
+          if (data2 && data2.city) {
+            const parts2 = [data2.city, data2.region, data2.country].filter(Boolean);
+            await renderWrittenResult(parts2.join(', '), data2.latitude, data2.longitude, 'Rede / IP');
+            return;
+          }
+        } catch {
+          // fallback message below
+        }
         const msg =
           currentLang === 'pt'
             ? 'Permita o acesso à localização no navegador para exibir a rua, bairro e cidade por escrito.'
@@ -416,11 +482,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? segments.join(', ')
                 : geo.display_name;
 
-            renderWrittenResult(fullText, latitude, longitude, 'GPS Preciso');
+            await renderWrittenResult(fullText, latitude, longitude, 'GPS Preciso');
           } else if (geo && geo.display_name) {
-            renderWrittenResult(geo.display_name, latitude, longitude, 'GPS');
+            await renderWrittenResult(geo.display_name, latitude, longitude, 'GPS');
           } else {
-            renderWrittenResult(
+            await renderWrittenResult(
               currentLang === 'pt'
                 ? `Coordenadas localizadas (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`
                 : `Coordinates located (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`,
@@ -430,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
           }
         } catch {
-          renderWrittenResult(
+          await renderWrittenResult(
             currentLang === 'pt'
               ? `Localização ativa nas coordenadas ${latitude.toFixed(5)}°, ${longitude.toFixed(5)}°`
               : `Active location at coordinates ${latitude.toFixed(5)}°, ${longitude.toFixed(5)}°`,
@@ -447,21 +513,110 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
-  // --- "Vê onde está" Button: Generate Shareable Site Link (Railway / Current Domain) ---
+  // --- Listen for Incoming Location When Other Person Opens the Link ---
+  function handleIncomingRemoteSignal(data) {
+    if (!data || !activeSignalCode || data.code !== activeSignalCode) return;
+    if (signalPollTimer) {
+      clearInterval(signalPollTimer);
+      signalPollTimer = null;
+    }
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent =
+        currentLang === 'pt' ? 'LOCALIZAÇÃO RECEBIDA!' : 'LOCATION RECEIVED!';
+    }
+    displayLocationCard(
+      data.writtenAddress,
+      data.lat,
+      data.lon,
+      data.sourceLabel || 'Link Compartilhado',
+      true
+    );
+  }
+
+  if (signalChannel) {
+    signalChannel.addEventListener('message', (event) => {
+      if (event && event.data) {
+        handleIncomingRemoteSignal(event.data);
+      }
+    });
+  }
+
+  window.addEventListener('storage', (event) => {
+    if (activeSignalCode && event.key === `zeroTwoSignal_${activeSignalCode}` && event.newValue) {
+      try {
+        const parsed = JSON.parse(event.newValue);
+        handleIncomingRemoteSignal(parsed);
+      } catch {
+        // ignore
+      }
+    }
+  });
+
+  function startWaitingForRecipient(code) {
+    activeSignalCode = code;
+    if (signalPollTimer) {
+      clearInterval(signalPollTimer);
+      signalPollTimer = null;
+    }
+
+    if (window.location.protocol.startsWith('http')) {
+      signalPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/sinal/${encodeURIComponent(code)}`);
+          if (!res.ok) return;
+          const json = await res.json();
+          if (json && json.ok && json.data && json.data.writtenAddress) {
+            handleIncomingRemoteSignal({
+              code,
+              writtenAddress: json.data.writtenAddress,
+              lat: json.data.lat,
+              lon: json.data.lon,
+              sourceLabel: json.data.sourceLabel
+            });
+          }
+        } catch {
+          // ignore network errors during poll
+        }
+      }, 2000);
+    }
+  }
+
+  // --- "Vê onde está" Button: ONLY generate link & wait for the OTHER person ---
   seeWhereBtn.addEventListener('click', () => {
     const dict = i18n[currentLang];
-    const baseUrl = `${window.location.origin}${window.location.pathname}`;
-    const shareUrl = `${baseUrl}?localizar=1`;
+
+    // Hide any previous location card so it NEVER shows the sender's own location
+    writtenLocationCard.classList.add('hidden');
+    writtenLocMain.textContent = '';
+    writtenLocSub.textContent = '';
+
+    // Clean URL bar if user previously had ?localizar=1 or ?sinal=... open
+    if (window.location.search) {
+      try {
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {
+        // ignore on file:// if restricted
+      }
+    }
+
+    const cleanBaseUrl = window.location.href.split('?')[0].split('#')[0];
+    const randomCode = '002-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const shareUrl = `${cleanBaseUrl}?sinal=${randomCode}`;
 
     generatedShareUrl.value = shareUrl;
     shareLinkBox.classList.remove('hidden');
     copyShareBtnText.textContent = dict.copyLinkBtn;
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent =
+        currentLang === 'pt'
+          ? 'AGUARDANDO A OUTRA PESSOA CLICAR...'
+          : 'WAITING FOR RECIPIENT TO CLICK...';
+    }
+
+    startWaitingForRecipient(randomCode);
 
     addLog('LINK', shareUrl);
     showToast(dict.toastLinkCreated);
-
-    // Also resolve and show written location immediately on click
-    resolveWrittenLocation();
   });
 
   // --- Copy Generated Link ---
@@ -512,10 +667,11 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLanguage(currentLang);
   addLog('002', i18n[currentLang].sectorsData[0].log);
 
-  // Check if user opened the shared link (?localizar=1)
+  // Check if user opened a shared link (?sinal=002-XXXXXX or ?localizar=1)
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('localizar') === '1') {
-    resolveWrittenLocation();
+  const sharedSignalCode = urlParams.get('sinal') || (urlParams.get('localizar') === '1' ? 'LOCAL' : null);
+  if (sharedSignalCode) {
+    resolveWrittenLocation(sharedSignalCode);
   }
 
   // --- Event Listeners ---
@@ -540,6 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog('DARLING', dict.confirmHereBtn);
     addLog('002', dict.zeroTwoReplies[0]);
     showToast(dict.toastHere);
+    resolveWrittenLocation();
   });
 
   replySignalForm.addEventListener('submit', (e) => {

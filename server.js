@@ -16,9 +16,58 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
+// In-memory store for shared location links (by signal code)
+const signalStore = new Map();
+
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   let pathname = decodeURIComponent(parsedUrl.pathname);
+
+  // --- API: Receive or Poll Shared Link Location (/api/sinal/:code) ---
+  if (pathname.startsWith('/api/sinal/')) {
+    const code = pathname.replace('/api/sinal/', '').trim();
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+
+    if (!code) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ ok: false, error: 'Missing code' }));
+      return;
+    }
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 1e5) req.socket.destroy();
+      });
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          signalStore.set(code, {
+            writtenAddress: String(payload.writtenAddress || ''),
+            lat: payload.lat || null,
+            lon: payload.lon || null,
+            sourceLabel: String(payload.sourceLabel || 'Link'),
+            clickedAt: new Date().toISOString()
+          });
+          res.writeHead(200);
+          res.end(JSON.stringify({ ok: true }));
+        } catch {
+          res.writeHead(400);
+          res.end(JSON.stringify({ ok: false }));
+        }
+      });
+      return;
+    }
+
+    if (req.method === 'GET') {
+      const found = signalStore.get(code) || null;
+      res.writeHead(200);
+      res.end(JSON.stringify({ ok: true, data: found }));
+      return;
+    }
+  }
 
   if (pathname === '/' || pathname === '') {
     pathname = '/index.html';
@@ -36,7 +85,10 @@ const server = http.createServer((req, res) => {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache'
+    });
     res.end(data);
   });
 });
