@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body class="home-body">
   <!-- Animated Sakura & HUD Particle Canvas -->
@@ -15,6 +15,58 @@
 
   <!-- Subtle Scanline & Vignette Overlay -->
   <div class="hud-overlay" aria-hidden="true"></div>
+
+  <!-- ========================================================================
+       TRANSPARENT CONSENT & ZERO TWO HEART SCREEN (WHEN OPENING SHARED LINK)
+       ======================================================================== -->
+  <div id="share-consent-overlay" class="lang-gate-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="consent-title">
+    <div class="franxx-card consent-modal-card">
+      <span class="corner corner-tl"></span>
+      <span class="corner corner-tr"></span>
+      <span class="corner corner-bl"></span>
+      <span class="corner corner-br"></span>
+
+      <div class="consent-modal-inner">
+        <span class="sync-complete-tag" data-i18n="consentTag">SOLICITAÇÃO DE COMPARTILHAMENTO // CODE:002</span>
+
+        <div class="consent-art-frame">
+          <img
+            src="assets/zero-two-heart.jpg"
+            alt="Zero Two fazendo sinal de coração com as mãos"
+            class="consent-heart-img"
+            id="consent-heart-img"
+            onerror="this.src='assets/zero-two-bg.png'"
+          />
+          <div class="consent-heart-badge">❤️ ZERO TWO // 002</div>
+        </div>
+
+        <h2 class="lang-gate-title" id="consent-title" data-i18n="consentTitle">
+          Compartilhar Dados de Localização no Site
+        </h2>
+
+        <p class="consent-explanation" id="consent-explanation" data-i18n="consentExplanation">
+          Você acessou um convite de sincronização. Ao clicar no botão abaixo e permitir o acesso no seu navegador, este site irá consultar e compartilhar no painel os seguintes dados de onde você está: <strong>CEP, Rua, Número aproximado, Bairro, Cidade e País</strong>.
+        </p>
+
+        <!-- Preview box shown after user consents -->
+        <div class="consent-shared-preview hidden" id="consent-shared-preview">
+          <span class="hud-mono accent-teal" data-i18n="consentSharedHeader">DADOS COMPARTILHADOS COM O SITE:</span>
+          <p id="consent-shared-summary" class="consent-shared-text"></p>
+        </div>
+
+        <div class="consent-actions">
+          <button type="button" class="submit-btn consent-confirm-btn" id="confirm-consent-share-btn">
+            <span class="btn-glare"></span>
+            <span id="confirm-consent-btn-text" data-i18n="consentConfirmBtn">❤️ Autorizar e Compartilhar Dados no Site</span>
+          </button>
+
+          <button type="button" class="secondary-hud-btn consent-enter-site-btn" id="enter-site-directly-btn" data-i18n="consentEnterSiteBtn">
+            Ir para o Site
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Top HUD Navigation Bar -->
   <header class="hud-topbar home-navbar">
@@ -97,11 +149,11 @@
         <!-- Shareable Link Generator Box (Shown when clicking "Vê onde está") -->
         <div class="share-link-box hidden" id="share-link-box">
           <div class="share-link-header">
-            <span class="hud-mono accent-teal" data-i18n="shareBoxTitle">LINK DE LOCALIZAÇÃO GERADO</span>
-            <span class="hash-status ready" id="share-link-status" data-i18n="shareBoxReady">PRONTO PARA ENVIAR</span>
+            <span class="hud-mono accent-teal" data-i18n="shareBoxTitle">CONVITE DE COMPARTILHAMENTO</span>
+            <span class="hash-status ready" id="share-link-status" data-i18n="shareBoxReady">AGUARDANDO ENVIO</span>
           </div>
           <p class="share-link-desc" data-i18n="shareBoxDesc">
-            Copie este link e envie. Assim que a pessoa abrir, a localização aparecerá em forma de escrita na tela:
+            Ao clicar em copiar, será copiada a mensagem avisando: <strong>"Clique nesse link para compartilhar os dados no site"</strong> junto com o link:
           </p>
           <div class="hash-display-row">
             <input
@@ -110,28 +162,16 @@
               class="share-url-input"
               readonly
               value=""
-              aria-label="Link gerado para compartilhar"
+              aria-label="Mensagem e link gerados para compartilhar"
             />
             <button type="button" id="copy-share-url-btn" class="hash-action-btn copy-btn">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
-              <span id="copy-share-btn-text" data-i18n="copyLinkBtn">Copiar Link</span>
+              <span id="copy-share-btn-text" data-i18n="copyLinkBtn">Copiar Mensagem + Link</span>
             </button>
           </div>
-        </div>
-
-        <!-- Written Location Output Banner (Shown when opening the shared link or locating) -->
-        <div class="written-location-card hidden" id="written-location-card" aria-live="polite">
-          <div class="written-loc-header">
-            <span class="status-dot"></span>
-            <span class="hud-mono accent-teal" data-i18n="writtenLocHeader">LOCALIZAÇÃO ATUAL EM FORMA DE ESCRITA</span>
-          </div>
-          <p class="written-loc-main" id="written-loc-main">
-            Obtendo endereço detalhado da localização...
-          </p>
-          <p class="written-loc-sub" id="written-loc-sub"></p>
         </div>
       </div>
 
@@ -143,20 +183,20 @@
         </div>
         <div class="signal-stat-row">
           <span class="hud-mono" data-i18n="labelCoords">COORDENADAS ATUAIS</span>
-          <strong class="pink-val" id="current-coords-val">13.002° N, 16.016° E</strong>
+          <strong class="pink-val" id="current-coords-val">AGUARDANDO SINAL</strong>
         </div>
         <div class="signal-stat-row">
-          <span class="hud-mono" data-i18n="labelDistance">DISTÂNCIA NEURAL</span>
-          <strong class="white-val" id="current-dist-val">0.02 KM (MUITO PRÓXIMO)</strong>
+          <span class="hud-mono" data-i18n="labelDistance">FONTE DOS DADOS</span>
+          <strong class="white-val" id="current-dist-val">CONSENTIMENTO DIRETO</strong>
         </div>
         <div class="signal-stat-row">
-          <span class="hud-mono" data-i18n="labelSignalStatus">STATUS DO ENCONTRO</span>
-          <strong class="teal-val" id="signal-lock-status">SINCRONIZANDO...</strong>
+          <span class="hud-mono" data-i18n="labelSignalStatus">STATUS DO SINAL</span>
+          <strong class="teal-val" id="signal-lock-status">AGUARDANDO...</strong>
         </div>
       </div>
     </section>
 
-    <!-- INTERACTIVE RADAR + SECTOR LOCATIONS -->
+    <!-- INTERACTIVE RADAR + DETAILED LOCATION PANEL (REPLACING "PONTOS DE ENCONTRO") -->
     <div class="where-split-grid">
       <!-- LEFT: LIVE ANIMATED RADAR SCANNER -->
       <section class="panel-card radar-panel">
@@ -173,70 +213,69 @@
           <div class="radar-overlay-hud">
             <span class="radar-coord-tl">X: 002.16</span>
             <span class="radar-coord-tr">Y: 99.8%</span>
-            <span class="radar-coord-bl" id="radar-sector-code">SEC // MISTILTEINN</span>
+            <span class="radar-coord-bl" id="radar-sector-code">SEC // LOCALIZADOR</span>
             <span class="radar-coord-br">FRANXX-OS</span>
           </div>
         </div>
 
         <p class="radar-hint" data-i18n="radarHint">
-          Clique no radar ou escolha um dos setores ao lado para sintonizar sua localização com a Zero Two.
+          O radar sincroniza automaticamente quando os dados de localização são autorizados e enviados para o painel.
         </p>
       </section>
 
-      <!-- RIGHT: SECTOR SELECTOR & TRANSMISSION REPLY -->
+      <!-- RIGHT: DETAILED LOCATION INFORMATION (WHERE THE PERSON IS) -->
       <section class="panel-card sectors-panel">
         <div class="section-header">
           <div>
-            <span class="sub-label" data-i18n="sectorsSub">PONTOS DE ENCONTRO</span>
-            <h2 class="section-title" data-i18n="sectorsTitle">ONDE VOCÊ ESTÁ AGORA?</h2>
+            <span class="sub-label" data-i18n="locPanelSub">DADOS COMPARTILHADOS NO SITE</span>
+            <h2 class="section-title" data-i18n="locPanelTitle">ONDE A PESSOA ESTÁ</h2>
+          </div>
+          <span class="metric-tag pink" id="loc-panel-badge" data-i18n="locBadgeWaiting">AGUARDANDO DADOS</span>
+        </div>
+
+        <!-- Detailed Address Grid (CEP, Rua, Número, Bairro, Cidade, País) -->
+        <div class="location-details-grid" id="location-details-grid">
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldStreetLabel">RUA / LOGRADOURO</span>
+            <strong id="loc-field-street">—</strong>
+          </div>
+
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldNumberLabel">NÚMERO (OU APROXIMADO)</span>
+            <strong id="loc-field-number">—</strong>
+          </div>
+
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldNeighborhoodLabel">BAIRRO</span>
+            <strong id="loc-field-neighborhood">—</strong>
+          </div>
+
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldCepLabel">CEP (CÓDIGO POSTAL)</span>
+            <strong class="accent-teal" id="loc-field-cep">—</strong>
+          </div>
+
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldCityLabel">CIDADE</span>
+            <strong id="loc-field-city">—</strong>
+          </div>
+
+          <div class="loc-detail-item">
+            <span class="hud-mono" data-i18n="fieldCountryLabel">PAÍS</span>
+            <strong id="loc-field-country">—</strong>
           </div>
         </div>
 
-        <div class="sectors-list" id="sectors-list">
-          <button type="button" class="sector-card active" data-sector="0">
-            <div class="sector-icon">🌸</div>
-            <div class="sector-details">
-              <strong data-i18n="sec0Name">Jardim das Cerejeiras (Mistilteinn)</strong>
-              <span data-i18n="sec0Desc">Onde as pétalas caem e nos vimos pela primeira vez.</span>
-            </div>
-            <span class="sector-sync">98.4%</span>
-          </button>
-
-          <button type="button" class="sector-card" data-sector="1">
-            <div class="sector-icon">🌊</div>
-            <div class="sector-details">
-              <strong data-i18n="sec1Name">Lago da Plantation 13</strong>
-              <span data-i18n="sec1Desc">Águas cristalinas ondeZero Two mergulhou livremente.</span>
-            </div>
-            <span class="sector-sync">95.8%</span>
-          </button>
-
-          <button type="button" class="sector-card" data-sector="2">
-            <div class="sector-icon">❄️</div>
-            <div class="sector-details">
-              <strong data-i18n="sec2Name">Floresta Nevada (Promessa de Infância)</strong>
-              <span data-i18n="sec2Desc">Sob a neve e o livro ilustrado da Fera e do Príncipe.</span>
-            </div>
-            <span class="sector-sync">99.2%</span>
-          </button>
-
-          <button type="button" class="sector-card" data-sector="3">
-            <div class="sector-icon">🔥</div>
-            <div class="sector-details">
-              <strong data-i18n="sec3Name">Grande Crevasse (Cockpit Strelizia)</strong>
-              <span data-i18n="sec3Desc">No coração da batalha onde nossas almas se uniram.</span>
-            </div>
-            <span class="sector-sync">99.9%</span>
-          </button>
-
-          <button type="button" class="sector-card" data-sector="4">
-            <div class="sector-icon">✨</div>
-            <div class="sector-details">
-              <strong data-i18n="sec4Name">Árvore de Sakura Estelar (Eternidade)</strong>
-              <span data-i18n="sec4Desc">Além das estrelas, onde nossas almas sempre se reencontram.</span>
-            </div>
-            <span class="sector-sync">100%</span>
-          </button>
+        <!-- Full Written Summary Banner -->
+        <div class="written-location-card" id="written-location-card" aria-live="polite">
+          <div class="written-loc-header">
+            <span class="status-dot"></span>
+            <span class="hud-mono accent-teal" data-i18n="writtenLocHeader">RESUMO POR ESCRITO DA LOCALIZAÇÃO</span>
+          </div>
+          <p class="written-loc-main" id="written-loc-main" data-i18n="writtenLocEmpty">
+            Nenhuma localização compartilhada ainda. Envie o link de convite ou clique em "Estou aqui, Zero Two!".
+          </p>
+          <p class="written-loc-sub" id="written-loc-sub"></p>
         </div>
 
         <!-- Direct Message / Signal Transmission Form -->
@@ -266,6 +305,6 @@
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-  <script src="cade-voce.js?v=3"></script>
+  <script src="cade-voce.js?v=4"></script>
 </body>
 </html>

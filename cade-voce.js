@@ -1,5 +1,5 @@
 // ============================================================================
-// ZERO TWO (CODE:002) — "CADÊ VOCÊ?" NEURAL RADAR & WRITTEN LOCATION SCRIPT
+// ZERO TWO (CODE:002) — "CADÊ VOCÊ?" RADAR, CONSENT SCREEN & ADDRESS DETAILS
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentLang = sessionStorage.getItem('zeroTwoLang') || 'pt';
   let petalsActive = true;
-  let activeSectorIndex = 0;
 
   // --- Translations (PT-BR & EN-US) ---
   const i18n = {
@@ -38,84 +37,53 @@ document.addEventListener('DOMContentLoaded', () => {
       pingBtnText: 'EMITIR SINAL DE LOCALIZAÇÃO',
       confirmHereBtn: '"Estou aqui, Zero Two!"',
       seeWhereBtn: 'Vê onde está',
-      shareBoxTitle: 'LINK DE LOCALIZAÇÃO GERADO',
-      shareBoxReady: 'PRONTO PARA ENVIAR',
-      shareBoxDesc: 'Copie este link e envie para a pessoa. Assim que ela abrir, a localização aparecerá em forma de escrita na tela:',
-      copyLinkBtn: 'Copiar Link',
+      shareBoxTitle: 'CONVITE DE COMPARTILHAMENTO',
+      shareBoxReady: 'AGUARDANDO A PESSOA CLICAR...',
+      shareBoxDesc:
+        'Copie a mensagem abaixo e envie. Ela avisa: "Clique nesse link para compartilhar os dados no site":',
+      copyLinkBtn: 'Copiar Mensagem + Link',
       copiedLinkBtn: 'Copiado!',
-      writtenLocHeader: 'LOCALIZAÇÃO EM FORMA DE ESCRITA',
-      writtenLocLoading: 'Obtendo localização em forma de escrita...',
+      consentTag: 'SOLICITAÇÃO DE COMPARTILHAMENTO // CODE:002',
+      consentTitle: 'Compartilhar Dados de Localização no Site',
+      consentExplanation:
+        'Você acessou um link para compartilhar dados no site. Ao clicar no botão abaixo e autorizar no seu navegador, sua localização atual (CEP, Rua, Número aproximado, Bairro, Cidade e País) será consultada e exibida no painel do site.',
+      consentSharedHeader: 'DADOS COMPARTILHADOS COM O SITE:',
+      consentConfirmBtn: '❤️ Autorizar e Compartilhar Dados no Site',
+      consentEnterSiteBtn: 'Ir para o Site',
+      locPanelSub: 'DADOS COMPARTILHADOS NO SITE',
+      locPanelTitle: 'ONDE A PESSOA ESTÁ',
+      locBadgeWaiting: 'AGUARDANDO DADOS',
+      locBadgeReceived: 'LOCALIZAÇÃO ATIVA',
+      fieldStreetLabel: 'RUA / LOGRADOURO',
+      fieldNumberLabel: 'NÚMERO (OU APROXIMADO)',
+      fieldNeighborhoodLabel: 'BAIRRO',
+      fieldCepLabel: 'CEP (CÓDIGO POSTAL)',
+      fieldCityLabel: 'CIDADE',
+      fieldCountryLabel: 'PAÍS',
+      writtenLocHeader: 'RESUMO POR ESCRITO DA LOCALIZAÇÃO',
+      writtenLocEmpty:
+        'Nenhuma localização compartilhada ainda. Envie o link de convite ou clique em "Estou aqui, Zero Two!".',
+      writtenLocLoading: 'Consultando CEP, rua, número aproximado, bairro, cidade e país...',
       labelTarget: 'ALVO RASTREADO',
       labelCoords: 'COORDENADAS ATUAIS',
-      labelDistance: 'DISTÂNCIA NEURAL',
-      labelSignalStatus: 'STATUS DO ENCONTRO',
-      statusFound: 'ENCONTRO CONFIRMADO // 100%',
+      labelDistance: 'FONTE DOS DADOS',
+      labelSignalStatus: 'STATUS DO SINAL',
+      statusFound: 'SINAL SINCRONIZADO // 100%',
       radarSub: 'SONAR HOLOGRÁFICO STRELIZIA',
       radarTitle: 'RADAR DE RASTREAMENTO',
-      radarHint: 'Clique no radar ou escolha um dos setores ao lado para sintonizar sua localização com a Zero Two.',
-      sectorsSub: 'PONTOS DE ENCONTRO',
-      sectorsTitle: 'ONDE VOCÊ ESTÁ AGORA?',
-      sec0Name: 'Jardim das Cerejeiras (Mistilteinn)',
-      sec0Desc: 'Onde as pétalas caem e nos vimos pela primeira vez.',
-      sec1Name: 'Lago da Plantation 13',
-      sec1Desc: 'Águas cristalinas onde Zero Two mergulhou livremente.',
-      sec2Name: 'Floresta Nevada (Promessa de Infância)',
-      sec2Desc: 'Sob a neve e o livro ilustrado da Fera e do Príncipe.',
-      sec3Name: 'Grande Crevasse (Cockpit Strelizia)',
-      sec3Desc: 'No coração da batalha onde nossas almas se uniram.',
-      sec4Name: 'Árvore de Sakura Estelar (Eternidade)',
-      sec4Desc: 'Além das estrelas, onde nossas almas sempre se reencontram.',
+      radarHint:
+        'O radar sincroniza automaticamente quando os dados de localização são autorizados e enviados para o painel.',
       replyLabel: 'ENVIAR RESPOSTA DIRETA PARA ZERO TWO:',
       replyPlaceholder: 'Ex: Estou te esperando sob as cerejeiras, Zero Two!',
       replySendBtn: 'Transmitir',
       toastPing: '📡 Pulso de radar emitido! Coordenadas sincronizadas com a <strong>Zero Two</strong>.',
-      toastHere: '❤️ Sinal recebido! Zero Two: <strong>"Encontrei você, meu Darling!"</strong>',
-      toastLinkCreated: '🔗 Link gerado! Copie e envie para quem você quer localizar.',
-      toastLinkCopied: '✅ Link copiado para a área de transferência!',
-      toastLocSuccess: '📍 Localização identificada e escrita na tela!',
+      toastHere: '❤️ Sincronizando sua localização atual com a <strong>Zero Two</strong>!',
+      toastLinkCreated:
+        '🔗 Link e mensagem gerados! Copie e envie para quem vai compartilhar os dados no site.',
+      toastLinkCopied: '✅ Mensagem + Link copiados para a área de transferência!',
+      toastLocSuccess: '📍 Dados de localização (CEP, Rua, Bairro, Cidade e País) atualizados no painel!',
       toastLang: 'Idioma alterado para <strong>Português (BR)</strong>.',
-      sectorsData: [
-        {
-          code: 'SEC // MISTILTEINN',
-          coords: '13.002° N, 16.016° E',
-          dist: '0.02 KM (SOB AS CEREJEIRAS)',
-          status: 'SINAL FORTE // 98.4%',
-          quote: '"Eu procurei por você sob cada árvore de cerejeira de Mistilteinn... Então era aqui que você estava, meu <strong>Darling</strong>!"',
-          log: 'Sinal detectado no Jardim das Cerejeiras (Mistilteinn).'
-        },
-        {
-          code: 'SEC // LAGO-P13',
-          coords: '42.810° S, 02.998° W',
-          dist: '0.15 KM (BEIRA DA ÁGUA)',
-          status: 'SINAL CLARO // 95.8%',
-          quote: '"Lembra quando nos encontramos neste lago pela primeira vez? A água continua brilhando como os seus olhos, <strong>Darling</strong>."',
-          log: 'Coordenadas sintonizadas no Lago da Plantation 13.'
-        },
-        {
-          code: 'SEC // FLORESTA-NEVE',
-          coords: '88.104° N, 00.002° E',
-          dist: '0.00 KM (MEMÓRIA VIVA)',
-          status: 'RESSONÂNCIA // 99.2%',
-          quote: '"Mesmo no frio daquela noite de neve, você segurou a minha mão e me deu um motivo para continuar procurando por você, <strong>Darling</strong>."',
-          log: 'Memória de infância na Floresta Nevada sincronizada.'
-        },
-        {
-          code: 'SEC // GRAN-CREVASSE',
-          coords: '66.600° S, 13.002° E',
-          dist: '0.00 KM (MESMO COCKPIT)',
-          status: 'CONEXÃO TOTAL // 99.9%',
-          quote: '"Aqui dentro da Strelizia não existe distância entre nós dois. Nossos corações batem juntos, meu <strong>Darling</strong>!"',
-          log: 'Ponte neural máxima estabelecida na Grande Crevasse.'
-        },
-        {
-          code: 'SEC // SAKURA-ESTELAR',
-          coords: '∞.002° N, ∞.016° E',
-          dist: '0.00 KM (ALMAS UNIDAS)',
-          status: 'PROMESSA ETERNA // 100%',
-          quote: '"Não importa quantos séculos passem ou em qual estrela estejamos... Eu sempre vou encontrar você de novo, meu <strong>Darling</strong>."',
-          log: 'Sincronização eterna confirmada na Árvore de Sakura Estelar.'
-        }
-      ],
+      shareMessagePrefix: 'Clique nesse link para compartilhar os dados no site:',
       zeroTwoReplies: [
         'Zero Two: "Eu ouvi a sua voz! Já estou voando até você, Darling!"',
         'Zero Two: "Nunca mais se esconda de mim, viu? Promessa é promessa!"',
@@ -136,84 +104,52 @@ document.addEventListener('DOMContentLoaded', () => {
       pingBtnText: 'EMIT LOCATION BEACON',
       confirmHereBtn: '"I am right here, Zero Two!"',
       seeWhereBtn: 'See where you are',
-      shareBoxTitle: 'GENERATED LOCATION LINK',
-      shareBoxReady: 'READY TO SHARE',
-      shareBoxDesc: 'Copy this link and send it. As soon as the person opens it, the location will appear in written form on screen:',
-      copyLinkBtn: 'Copy Link',
+      shareBoxTitle: 'LOCATION SHARING INVITE',
+      shareBoxReady: 'WAITING FOR RECIPIENT...',
+      shareBoxDesc:
+        'Copy the message below and send it ("Click this link to share the data on the site"):',
+      copyLinkBtn: 'Copy Message + Link',
       copiedLinkBtn: 'Copied!',
-      writtenLocHeader: 'LOCATION IN WRITTEN FORM',
-      writtenLocLoading: 'Retrieving detailed written location...',
+      consentTag: 'LOCATION SHARING REQUEST // CODE:002',
+      consentTitle: 'Share Location Data on the Site',
+      consentExplanation:
+        'You opened a link to share location data on the site. By clicking the button below and allowing browser access, your current location (Postal Code, Street, Approximate Number, Neighborhood, City, and Country) will be displayed on the site panel.',
+      consentSharedHeader: 'DATA SHARED WITH THE SITE:',
+      consentConfirmBtn: '❤️ Authorize & Share Data on the Site',
+      consentEnterSiteBtn: 'Go to the Site',
+      locPanelSub: 'DATA SHARED ON THE SITE',
+      locPanelTitle: 'WHERE THE PERSON IS',
+      locBadgeWaiting: 'WAITING FOR DATA',
+      locBadgeReceived: 'LOCATION ACTIVE',
+      fieldStreetLabel: 'STREET',
+      fieldNumberLabel: 'NUMBER (OR APPROXIMATE)',
+      fieldNeighborhoodLabel: 'NEIGHBORHOOD',
+      fieldCepLabel: 'POSTAL CODE (CEP)',
+      fieldCityLabel: 'CITY',
+      fieldCountryLabel: 'COUNTRY',
+      writtenLocHeader: 'WRITTEN LOCATION SUMMARY',
+      writtenLocEmpty:
+        'No location shared yet. Send the invite link or click "I am right here, Zero Two!".',
+      writtenLocLoading: 'Retrieving postal code, street, number, neighborhood, city, and country...',
       labelTarget: 'TRACKED TARGET',
       labelCoords: 'CURRENT COORDINATES',
-      labelDistance: 'NEURAL DISTANCE',
-      labelSignalStatus: 'RENDEZVOUS STATUS',
-      statusFound: 'RENDEZVOUS CONFIRMED // 100%',
+      labelDistance: 'DATA SOURCE',
+      labelSignalStatus: 'SIGNAL STATUS',
+      statusFound: 'SIGNAL SYNCHRONIZED // 100%',
       radarSub: 'STRELIZIA HOLOGRAPHIC SONAR',
       radarTitle: 'NEURAL TRACKING RADAR',
-      radarHint: 'Click on the radar or select a sector on the right to tune your location with Zero Two.',
-      sectorsSub: 'RENDEZVOUS POINTS',
-      sectorsTitle: 'WHERE ARE YOU RIGHT NOW?',
-      sec0Name: 'Cherry Blossom Garden (Mistilteinn)',
-      sec0Desc: 'Where the sakura petals fall and we first met.',
-      sec1Name: 'Plantation 13 Lake',
-      sec1Desc: 'Crystal waters where Zero Two swam freely.',
-      sec2Name: 'Snowy Forest (Childhood Promise)',
-      sec2Desc: 'Beneath the falling snow and the picture book.',
-      sec3Name: 'Gran Crevasse (Strelizia Cockpit)',
-      sec3Desc: 'At the heart of the battle where our souls united.',
-      sec4Name: 'Starlight Sakura Tree (Eternity)',
-      sec4Desc: 'Beyond the stars, where our souls always reunite.',
+      radarHint:
+        'The radar synchronizes automatically when location data is authorized and sent to the panel.',
       replyLabel: 'SEND DIRECT REPLY TO ZERO TWO:',
       replyPlaceholder: 'Ex: I am waiting for you beneath the cherry blossoms, Zero Two!',
       replySendBtn: 'Transmit',
       toastPing: '📡 Radar pulse emitted! Coordinates synchronized with <strong>Zero Two</strong>.',
-      toastHere: '❤️ Signal locked! Zero Two: <strong>"Found you, my Darling!"</strong>',
-      toastLinkCreated: '🔗 Link generated! Copy and send it to share.',
-      toastLinkCopied: '✅ Link copied to clipboard!',
-      toastLocSuccess: '📍 Location identified and displayed in written form!',
+      toastHere: '❤️ Synchronizing your current location with <strong>Zero Two</strong>!',
+      toastLinkCreated: '🔗 Invite message and link generated! Copy and send it.',
+      toastLinkCopied: '✅ Message + Link copied to clipboard!',
+      toastLocSuccess: '📍 Location details (Postal Code, Street, Neighborhood, City, Country) updated!',
       toastLang: 'Language switched to <strong>English (US)</strong>.',
-      sectorsData: [
-        {
-          code: 'SEC // MISTILTEINN',
-          coords: '13.002° N, 16.016° E',
-          dist: '0.02 KM (UNDER THE SAKURA)',
-          status: 'STRONG SIGNAL // 98.4%',
-          quote: '"I searched for you beneath every cherry blossom tree in Mistilteinn... So this is where you were, my <strong>Darling</strong>!"',
-          log: 'Signal detected at the Cherry Blossom Garden (Mistilteinn).'
-        },
-        {
-          code: 'SEC // LAKE-P13',
-          coords: '42.810° S, 02.998° W',
-          dist: '0.15 KM (WATERFRONT)',
-          status: 'CLEAR SIGNAL // 95.8%',
-          quote: '"Remember when we first met at this lake? The water still sparkles just like your eyes, <strong>Darling</strong>."',
-          log: 'Coordinates tuned to Plantation 13 Lake.'
-        },
-        {
-          code: 'SEC // SNOW-FOREST',
-          coords: '88.104° N, 00.002° E',
-          dist: '0.00 KM (LIVING MEMORY)',
-          status: 'RESONANCE // 99.2%',
-          quote: '"Even in the freezing snow that night, you held my hand and gave me a reason to keep searching for you, <strong>Darling</strong>."',
-          log: 'Childhood memory in the Snowy Forest synchronized.'
-        },
-        {
-          code: 'SEC // GRAN-CREVASSE',
-          coords: '66.600° S, 13.002° E',
-          dist: '0.00 KM (SAME COCKPIT)',
-          status: 'FULL LINK // 99.9%',
-          quote: '"Inside Strelizia there is zero distance between us. Our hearts beat as one, my <strong>Darling</strong>!"',
-          log: 'Maximum neural bridge established at Gran Crevasse.'
-        },
-        {
-          code: 'SEC // STAR-SAKURA',
-          coords: '∞.002° N, ∞.016° E',
-          dist: '0.00 KM (SOULS UNITED)',
-          status: 'ETERNAL PROMISE // 100%',
-          quote: '"No matter how many centuries pass or which star we are on... I will always find you again, my <strong>Darling</strong>."',
-          log: 'Eternal synchronization confirmed at the Starlight Sakura Tree.'
-        }
-      ],
+      shareMessagePrefix: 'Clique nesse link para compartilhar os dados no site:',
       zeroTwoReplies: [
         'Zero Two: "I heard your voice! I am flying straight to you, Darling!"',
         'Zero Two: "Never hide from me again, okay? A promise is a promise!"',
@@ -226,12 +162,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const navUserEmail = document.getElementById('nav-user-email');
   const whereUserName = document.getElementById('where-user-name');
   const whereHashBadge = document.getElementById('where-hash-badge');
-  const whereQuoteDisplay = document.getElementById('where-quote-display');
   const targetPilotCode = document.getElementById('target-pilot-code');
   const currentCoordsVal = document.getElementById('current-coords-val');
   const currentDistVal = document.getElementById('current-dist-val');
   const signalLockStatus = document.getElementById('signal-lock-status');
-  const radarSectorCode = document.getElementById('radar-sector-code');
 
   const pingSignalBtn = document.getElementById('ping-signal-btn');
   const confirmHereBtn = document.getElementById('confirm-here-btn');
@@ -242,18 +176,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyShareUrlBtn = document.getElementById('copy-share-url-btn');
   const copyShareBtnText = document.getElementById('copy-share-btn-text');
 
-  const writtenLocationCard = document.getElementById('written-location-card');
+  // Detailed Location Fields (Replacing "Pontos de Encontro")
+  const locPanelBadge = document.getElementById('loc-panel-badge');
+  const locFieldStreet = document.getElementById('loc-field-street');
+  const locFieldNumber = document.getElementById('loc-field-number');
+  const locFieldNeighborhood = document.getElementById('loc-field-neighborhood');
+  const locFieldCep = document.getElementById('loc-field-cep');
+  const locFieldCity = document.getElementById('loc-field-city');
+  const locFieldCountry = document.getElementById('loc-field-country');
+  const locDetailItems = document.querySelectorAll('.loc-detail-item');
+
   const writtenLocMain = document.getElementById('written-loc-main');
   const writtenLocSub = document.getElementById('written-loc-sub');
 
-  let activeSignalCode = null;
-  let signalPollTimer = null;
-  const signalChannel =
-    typeof BroadcastChannel !== 'undefined'
-      ? new BroadcastChannel('zero_two_signal_channel')
-      : null;
+  // Consent Modal Elements (Zero Two Heart Pose)
+  const shareConsentOverlay = document.getElementById('share-consent-overlay');
+  const confirmConsentShareBtn = document.getElementById('confirm-consent-share-btn');
+  const confirmConsentBtnText = document.getElementById('confirm-consent-btn-text');
+  const enterSiteDirectlyBtn = document.getElementById('enter-site-directly-btn');
+  const consentSharedPreview = document.getElementById('consent-shared-preview');
+  const consentSharedSummary = document.getElementById('consent-shared-summary');
 
-  const sectorCards = document.querySelectorAll('.sector-card');
   const replySignalForm = document.getElementById('reply-signal-form');
   const darlingMessageInput = document.getElementById('darling-message-input');
   const transmissionLog = document.getElementById('where-transmission-log');
@@ -265,6 +208,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const petalsToggleBtn = document.getElementById('petals-toggle-btn');
   const petalsBtnLabel = document.getElementById('petals-btn-label');
   const toastContainer = document.getElementById('toast-container');
+
+  let activeSignalCode = null;
+  let signalPollTimer = null;
+  const signalChannel =
+    typeof BroadcastChannel !== 'undefined'
+      ? new BroadcastChannel('zero_two_signal_channel')
+      : null;
 
   // --- Populate User Data ---
   const userPrefix = sessionData.email.includes('@')
@@ -298,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     transmissionLog.scrollTop = transmissionLog.scrollHeight;
   }
 
-  // --- Radar Blips Coordinates (Normalized -1 to 1) ---
+  // --- Radar Blips ---
   const sectorPoints = [
     { x: -0.35, y: -0.28 },
     { x: 0.42, y: -0.22 },
@@ -309,153 +259,85 @@ document.addEventListener('DOMContentLoaded', () => {
   let pulseWaves = [];
 
   function triggerRadarWave() {
-    const pt = sectorPoints[activeSectorIndex];
-    pulseWaves.push({ x: pt.x, y: pt.y, radius: 4, alpha: 1.0 });
+    pulseWaves.push({ x: 0.0, y: -0.05, radius: 4, alpha: 1.0 });
   }
 
-  // --- Select Sector ---
-  function selectSector(index, logEvent = true) {
-    activeSectorIndex = index;
+  // --- Clear Location Fields (Used when clicking "Vê onde está") ---
+  function resetLocationPanel() {
     const dict = i18n[currentLang];
-    const sec = dict.sectorsData[index];
-
-    sectorCards.forEach((c, idx) => {
-      c.classList.toggle('active', idx === index);
-    });
-
-    currentCoordsVal.textContent = sec.coords;
-    currentDistVal.textContent = sec.dist;
-    signalLockStatus.textContent = sec.status;
-    radarSectorCode.textContent = sec.code;
-
-    whereQuoteDisplay.style.opacity = '0';
-    setTimeout(() => {
-      whereQuoteDisplay.innerHTML = sec.quote;
-      whereQuoteDisplay.style.opacity = '1';
-    }, 150);
-
-    triggerRadarWave();
-    if (logEvent) {
-      addLog('RADAR', sec.log);
-    }
+    locFieldStreet.textContent = '—';
+    locFieldNumber.textContent = '—';
+    locFieldNeighborhood.textContent = '—';
+    locFieldCep.textContent = '—';
+    locFieldCity.textContent = '—';
+    locFieldCountry.textContent = '—';
+    locDetailItems.forEach((item) => item.classList.remove('populated'));
+    locPanelBadge.textContent = dict.locBadgeWaiting;
+    writtenLocMain.textContent = dict.writtenLocEmpty;
+    writtenLocSub.textContent = '';
+    currentCoordsVal.textContent = 'AGUARDANDO SINAL';
   }
 
-  // --- Render a Written Location on Screen ---
-  function displayLocationCard(writtenAddress, lat, lon, sourceLabel, isFromRemoteLink = false) {
+  // --- Populate Detailed Location Fields on Panel ---
+  function renderLocationDetails(details) {
     const dict = i18n[currentLang];
-    writtenLocationCard.classList.remove('hidden');
-    const prefixLabel = isFromRemoteLink
-      ? (currentLang === 'pt' ? '📍 Localização de quem clicou no link: ' : '📍 Location of the person who clicked the link: ')
-      : '📍 ';
-    writtenLocMain.textContent = `${prefixLabel}${writtenAddress}`;
+    locFieldStreet.textContent = details.street || '—';
+    locFieldNumber.textContent = details.number || '—';
+    locFieldNeighborhood.textContent = details.neighborhood || '—';
+    locFieldCep.textContent = details.cep || '—';
+    locFieldCity.textContent = details.city || '—';
+    locFieldCountry.textContent = details.country || '—';
 
+    locDetailItems.forEach((item) => item.classList.add('populated'));
+    locPanelBadge.textContent = dict.locBadgeReceived;
+
+    writtenLocMain.textContent = `📍 ${details.writtenAddress}`;
     const coordText =
-      lat && lon
-        ? `Latitude: ${Number(lat).toFixed(5)}° | Longitude: ${Number(lon).toFixed(5)}° (${sourceLabel})`
-        : sourceLabel;
+      details.lat && details.lon
+        ? `Latitude: ${Number(details.lat).toFixed(5)}° | Longitude: ${Number(details.lon).toFixed(5)}° (${details.sourceLabel || 'GPS'})`
+        : details.sourceLabel || '';
     writtenLocSub.textContent = coordText;
 
-    if (lat && lon) {
-      currentCoordsVal.textContent = `${Number(lat).toFixed(4)}°, ${Number(lon).toFixed(4)}°`;
+    if (details.lat && details.lon) {
+      currentCoordsVal.textContent = `${Number(details.lat).toFixed(4)}°, ${Number(details.lon).toFixed(4)}°`;
     }
+    currentDistVal.textContent = details.sourceLabel || 'CONSENTIMENTO DIRETO';
     signalLockStatus.textContent = dict.statusFound;
     triggerRadarWave();
-    addLog('LOC', writtenAddress);
+    addLog('LOC', details.writtenAddress);
     showToast(dict.toastLocSuccess);
   }
 
-  // --- Convert Coordinates / IP into Written Location ---
-  async function resolveWrittenLocation(signalCodeToReport = null) {
+  // --- Resolve Detailed Location Only After Explicit User Action ---
+  function requestAndResolveLocation(signalCodeToReport = null, onResolvedCallback = null) {
     const dict = i18n[currentLang];
-    writtenLocationCard.classList.remove('hidden');
     writtenLocMain.textContent = dict.writtenLocLoading;
     writtenLocSub.textContent = '';
 
-    // Helper to display final written text and report back if opened via shared link
-    const renderWrittenResult = async (writtenAddress, lat, lon, sourceLabel) => {
-      displayLocationCard(writtenAddress, lat, lon, sourceLabel, Boolean(signalCodeToReport));
-
-      if (signalCodeToReport) {
-        const payload = {
-          code: signalCodeToReport,
-          writtenAddress,
-          lat,
-          lon,
-          sourceLabel,
-          timestamp: Date.now()
-        };
-
-        // 1. Notify same-browser tabs (local testing via file:// or localhost)
-        try {
-          localStorage.setItem(`zeroTwoSignal_${signalCodeToReport}`, JSON.stringify(payload));
-        } catch {
-          // ignore storage quota errors
-        }
-        if (signalChannel) {
-          try {
-            signalChannel.postMessage(payload);
-          } catch {
-            // ignore
-          }
-        }
-
-        // 2. Notify server (Railway / Node backend) so the sender's device receives it
-        if (window.location.protocol.startsWith('http')) {
-          try {
-            await fetch(`/api/sinal/${encodeURIComponent(signalCodeToReport)}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-          } catch {
-            // ignore if running without backend
-          }
-        }
-      }
-    };
-
-    // Fallback via public IP geolocation API if GPS permission is denied or unavailable
-    const fallbackIpLocation = async () => {
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        if (!res.ok) throw new Error('IP lookup failed');
-        const data = await res.json();
-        const parts = [data.city, data.region, data.country_name].filter(Boolean);
-        const written = parts.length > 0
-          ? parts.join(', ')
-          : (currentLang === 'pt' ? 'Localização aproximada identificada' : 'Approximate location identified');
-        await renderWrittenResult(written, data.latitude, data.longitude, 'Rede / IP');
-      } catch {
-        try {
-          const res2 = await fetch('https://ipwho.is/');
-          const data2 = await res2.json();
-          if (data2 && data2.city) {
-            const parts2 = [data2.city, data2.region, data2.country].filter(Boolean);
-            await renderWrittenResult(parts2.join(', '), data2.latitude, data2.longitude, 'Rede / IP');
-            return;
-          }
-        } catch {
-          // fallback message below
-        }
-        const msg =
-          currentLang === 'pt'
-            ? 'Permita o acesso à localização no navegador para exibir a rua, bairro e cidade por escrito.'
-            : 'Please allow browser location access to display your street, neighborhood, and city in written form.';
-        writtenLocMain.textContent = msg;
-      }
-    };
-
     if (!('geolocation' in navigator)) {
-      await fallbackIpLocation();
+      const msg =
+        currentLang === 'pt'
+          ? 'Seu navegador não suporta geolocalização.'
+          : 'Your browser does not support geolocation.';
+      writtenLocMain.textContent = msg;
+      if (onResolvedCallback) onResolvedCallback(null, msg);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
+        let street = 'Via identificada por coordenadas';
+        let number = 'S/N (Aproximado na via)';
+        let neighborhood = '—';
+        let cep = '—';
+        let city = '—';
+        let country = '—';
+        let writtenAddress = `Coordenadas (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
+
         try {
           const langParam = currentLang === 'pt' ? 'pt-BR' : 'en-US';
-          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=${langParam}`;
+          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&accept-language=${langParam}`;
           const response = await fetch(url, {
             headers: { Accept: 'application/json' }
           });
@@ -463,57 +345,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
           if (geo && geo.address) {
             const a = geo.address;
-            const street = a.road || a.pedestrian || a.suburb || '';
-            const number = a.house_number ? `, nº ${a.house_number}` : '';
-            const neighborhood = a.suburb || a.neighbourhood || a.quarter || '';
-            const city = a.city || a.town || a.village || a.municipality || '';
-            const state = a.state || '';
-            const country = a.country || '';
+            street = a.road || a.pedestrian || a.footway || a.path || a.suburb || 'Rua não especificada';
+            number = a.house_number
+              ? `Nº ${a.house_number}`
+              : currentLang === 'pt'
+                ? 'S/N (Número aproximado no trecho)'
+                : 'Approx. street segment';
+            neighborhood =
+              a.suburb || a.neighbourhood || a.quarter || a.city_district || a.borough || 'Centro / Setor Local';
+            cep = a.postcode || (currentLang === 'pt' ? 'CEP Geral da Região' : 'Regional Postal Code');
 
-            const segments = [
-              street ? `${street}${number}` : '',
-              neighborhood && neighborhood !== street ? `Bairro ${neighborhood}` : '',
-              city && state ? `${city} - ${state}` : city || state,
-              country
-            ].filter(Boolean);
+            const rawCity = a.city || a.town || a.village || a.municipality || a.county || '—';
+            const rawState = a.state || '';
+            city = rawState && rawCity !== '—' ? `${rawCity} - ${rawState}` : rawCity;
+            country = a.country || '—';
 
-            const fullText =
-              segments.length > 0
-                ? segments.join(', ')
-                : geo.display_name;
-
-            await renderWrittenResult(fullText, latitude, longitude, 'GPS Preciso');
-          } else if (geo && geo.display_name) {
-            await renderWrittenResult(geo.display_name, latitude, longitude, 'GPS');
-          } else {
-            await renderWrittenResult(
-              currentLang === 'pt'
-                ? `Coordenadas localizadas (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`
-                : `Coordinates located (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`,
-              latitude,
-              longitude,
-              'GPS'
-            );
+            writtenAddress = `${street}, ${number} — Bairro ${neighborhood}, CEP: ${cep}, ${city}, ${country}`;
           }
         } catch {
-          await renderWrittenResult(
-            currentLang === 'pt'
-              ? `Localização ativa nas coordenadas ${latitude.toFixed(5)}°, ${longitude.toFixed(5)}°`
-              : `Active location at coordinates ${latitude.toFixed(5)}°, ${longitude.toFixed(5)}°`,
-            latitude,
-            longitude,
-            'GPS'
-          );
+          // Keep coordinate fallback if reverse geocoding request fails
         }
+
+        const details = {
+          code: signalCodeToReport,
+          street,
+          number,
+          neighborhood,
+          cep,
+          city,
+          country,
+          writtenAddress,
+          lat: latitude,
+          lon: longitude,
+          sourceLabel: 'GPS Autorizado',
+          timestamp: Date.now()
+        };
+
+        renderLocationDetails(details);
+
+        if (signalCodeToReport) {
+          try {
+            localStorage.setItem(`zeroTwoSignal_${signalCodeToReport}`, JSON.stringify(details));
+          } catch {
+            // ignore
+          }
+          if (signalChannel) {
+            try {
+              signalChannel.postMessage(details);
+            } catch {
+              // ignore
+            }
+          }
+          if (window.location.protocol.startsWith('http')) {
+            try {
+              await fetch(`/api/sinal/${encodeURIComponent(signalCodeToReport)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(details)
+              });
+            } catch {
+              // ignore
+            }
+          }
+        }
+
+        if (onResolvedCallback) onResolvedCallback(details, null);
       },
-      async () => {
-        await fallbackIpLocation();
+      () => {
+        const errMsg =
+          currentLang === 'pt'
+            ? 'Permissão de localização recusada ou indisponível no navegador. Autorize a permissão de localização do navegador para compartilhar os dados.'
+            : 'Browser location permission denied or unavailable. Please allow browser location access to share data.';
+        writtenLocMain.textContent = errMsg;
+        if (onResolvedCallback) onResolvedCallback(null, errMsg);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   }
 
-  // --- Listen for Incoming Location When Other Person Opens the Link ---
+  // --- Handle Incoming Location When Recipient Authorizes on the Link ---
   function handleIncomingRemoteSignal(data) {
     if (!data || !activeSignalCode || data.code !== activeSignalCode) return;
     if (signalPollTimer) {
@@ -522,15 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (shareLinkStatus) {
       shareLinkStatus.textContent =
-        currentLang === 'pt' ? 'LOCALIZAÇÃO RECEBIDA!' : 'LOCATION RECEIVED!';
+        currentLang === 'pt' ? 'DADOS RECEBIDOS NO PAINEL!' : 'DATA RECEIVED ON PANEL!';
     }
-    displayLocationCard(
-      data.writtenAddress,
-      data.lat,
-      data.lon,
-      data.sourceLabel || 'Link Compartilhado',
-      true
-    );
+    renderLocationDetails(data);
   }
 
   if (signalChannel) {
@@ -568,65 +472,57 @@ document.addEventListener('DOMContentLoaded', () => {
           if (json && json.ok && json.data && json.data.writtenAddress) {
             handleIncomingRemoteSignal({
               code,
-              writtenAddress: json.data.writtenAddress,
-              lat: json.data.lat,
-              lon: json.data.lon,
-              sourceLabel: json.data.sourceLabel
+              ...json.data
             });
           }
         } catch {
-          // ignore network errors during poll
+          // ignore network errors
         }
       }, 2000);
     }
   }
 
-  // --- "Vê onde está" Button: ONLY generate link & wait for the OTHER person ---
+  // --- "Vê onde está" Button: ONLY generate invite message + link & wait ---
   seeWhereBtn.addEventListener('click', () => {
     const dict = i18n[currentLang];
 
-    // Hide any previous location card so it NEVER shows the sender's own location
-    writtenLocationCard.classList.add('hidden');
-    writtenLocMain.textContent = '';
-    writtenLocSub.textContent = '';
+    // Reset panel so sender's own location is NEVER displayed when clicking "Vê onde está"
+    resetLocationPanel();
 
-    // Clean URL bar if user previously had ?localizar=1 or ?sinal=... open
     if (window.location.search) {
       try {
         window.history.replaceState({}, '', window.location.pathname);
       } catch {
-        // ignore on file:// if restricted
+        // ignore
       }
     }
 
     const cleanBaseUrl = window.location.href.split('?')[0].split('#')[0];
     const randomCode = '002-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     const shareUrl = `${cleanBaseUrl}?sinal=${randomCode}`;
+    const fullInviteText = `${dict.shareMessagePrefix} ${shareUrl}`;
 
-    generatedShareUrl.value = shareUrl;
+    generatedShareUrl.value = fullInviteText;
     shareLinkBox.classList.remove('hidden');
     copyShareBtnText.textContent = dict.copyLinkBtn;
     if (shareLinkStatus) {
-      shareLinkStatus.textContent =
-        currentLang === 'pt'
-          ? 'AGUARDANDO A OUTRA PESSOA CLICAR...'
-          : 'WAITING FOR RECIPIENT TO CLICK...';
+      shareLinkStatus.textContent = dict.shareBoxReady;
     }
 
     startWaitingForRecipient(randomCode);
 
-    addLog('LINK', shareUrl);
+    addLog('CONVITE', fullInviteText);
     showToast(dict.toastLinkCreated);
   });
 
-  // --- Copy Generated Link ---
+  // --- Copy Invite Message + Link ---
   copyShareUrlBtn.addEventListener('click', async () => {
     const dict = i18n[currentLang];
-    const linkToCopy = generatedShareUrl.value;
-    if (!linkToCopy) return;
+    const textToCopy = generatedShareUrl.value;
+    if (!textToCopy) return;
 
     try {
-      await navigator.clipboard.writeText(linkToCopy);
+      await navigator.clipboard.writeText(textToCopy);
       copyShareBtnText.textContent = dict.copiedLinkBtn;
       showToast(dict.toastLinkCopied);
       setTimeout(() => {
@@ -659,44 +555,66 @@ document.addEventListener('DOMContentLoaded', () => {
     themeModeLabel.textContent = isRampage ? dict.modeRampage : dict.modeSakura;
     petalsBtnLabel.textContent = petalsActive ? dict.petalsOn : dict.petalsOff;
     darlingMessageInput.placeholder = dict.replyPlaceholder;
-
-    selectSector(activeSectorIndex, false);
   }
 
   // Initialize language & initial log
   applyLanguage(currentLang);
-  addLog('002', i18n[currentLang].sectorsData[0].log);
+  addLog('002', 'Radar neural inicializado. Aguardando sincronização de localização.');
 
-  // Check if user opened a shared link (?sinal=002-XXXXXX or ?localizar=1)
+  // --- Check if User Opened the Shared Link (?sinal=002-XXXXXX) ---
   const urlParams = new URLSearchParams(window.location.search);
   const sharedSignalCode = urlParams.get('sinal') || (urlParams.get('localizar') === '1' ? 'LOCAL' : null);
-  if (sharedSignalCode) {
-    resolveWrittenLocation(sharedSignalCode);
+
+  if (sharedSignalCode && shareConsentOverlay) {
+    // Show the Zero Two Heart Pose & Transparent Consent Screen first
+    shareConsentOverlay.classList.remove('hidden');
+
+    confirmConsentShareBtn.addEventListener('click', () => {
+      confirmConsentBtnText.textContent =
+        currentLang === 'pt'
+          ? 'Solicitando permissão no navegador...'
+          : 'Requesting browser permission...';
+
+      requestAndResolveLocation(sharedSignalCode, (details, errMsg) => {
+        consentSharedPreview.classList.remove('hidden');
+        if (details) {
+          consentSharedSummary.textContent = details.writtenAddress;
+          confirmConsentBtnText.textContent =
+            currentLang === 'pt'
+              ? '✅ Dados Compartilhados! Entrando no Site...'
+              : '✅ Data Shared! Entering Site...';
+          setTimeout(() => {
+            shareConsentOverlay.classList.add('dismissed');
+            setTimeout(() => shareConsentOverlay.classList.add('hidden'), 400);
+          }, 1600);
+        } else {
+          consentSharedSummary.textContent = errMsg || '';
+          confirmConsentBtnText.textContent = i18n[currentLang].consentConfirmBtn;
+        }
+      });
+    });
+
+    enterSiteDirectlyBtn.addEventListener('click', () => {
+      shareConsentOverlay.classList.add('dismissed');
+      setTimeout(() => shareConsentOverlay.classList.add('hidden'), 400);
+    });
   }
 
-  // --- Event Listeners ---
-  sectorCards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const idx = Number(card.getAttribute('data-sector'));
-      selectSector(idx, true);
-    });
-  });
-
+  // --- Other Buttons ---
   pingSignalBtn.addEventListener('click', () => {
     triggerRadarWave();
     const dict = i18n[currentLang];
-    addLog('PING', `${dict.sectorsData[activeSectorIndex].coords} — OK`);
+    addLog('PING', 'Pulso de radar emitido — OK');
     showToast(dict.toastPing);
   });
 
   confirmHereBtn.addEventListener('click', () => {
     triggerRadarWave();
     const dict = i18n[currentLang];
-    signalLockStatus.textContent = dict.statusFound;
     addLog('DARLING', dict.confirmHereBtn);
     addLog('002', dict.zeroTwoReplies[0]);
     showToast(dict.toastHere);
-    resolveWrittenLocation();
+    requestAndResolveLocation(null);
   });
 
   replySignalForm.addEventListener('submit', (e) => {
@@ -708,13 +626,11 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog(userPrefix, `"${msg}"`);
     darlingMessageInput.value = '';
     triggerRadarWave();
-    signalLockStatus.textContent = dict.statusFound;
 
     const randomReply =
       dict.zeroTwoReplies[Math.floor(Math.random() * dict.zeroTwoReplies.length)];
     setTimeout(() => {
       addLog('002', randomReply);
-      showToast(dict.toastHere);
     }, 350);
   });
 
@@ -744,11 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const rCtx = radarCanvas.getContext('2d');
   let sweepAngle = 0;
 
-  radarCanvas.addEventListener('click', () => {
-    const nextIdx = (activeSectorIndex + 1) % sectorPoints.length;
-    selectSector(nextIdx, true);
-  });
-
   function drawRadar() {
     const w = radarCanvas.width;
     const h = radarCanvas.height;
@@ -762,15 +673,15 @@ document.addEventListener('DOMContentLoaded', () => {
     rCtx.clearRect(0, 0, w, h);
 
     // Concentric rings
-    rCtx.strokeStyle = 'rgba(0, 240, 255, 0.18)';
+    rCtx.strokeStyle = isRampage ? 'rgba(255, 0, 60, 0.22)' : 'rgba(0, 240, 255, 0.2)';
     rCtx.lineWidth = 1;
-    [0.25, 0.5, 0.75, 1].forEach((factor) => {
+    [0.25, 0.5, 0.75, 1].forEach((ratio) => {
       rCtx.beginPath();
-      rCtx.arc(cx, cy, maxR * factor, 0, Math.PI * 2);
+      rCtx.arc(cx, cy, maxR * ratio, 0, Math.PI * 2);
       rCtx.stroke();
     });
 
-    // Crosshair axes
+    // Crosshairs
     rCtx.beginPath();
     rCtx.moveTo(cx - maxR, cy);
     rCtx.lineTo(cx + maxR, cy);
@@ -778,77 +689,57 @@ document.addEventListener('DOMContentLoaded', () => {
     rCtx.lineTo(cx, cy + maxR);
     rCtx.stroke();
 
-    // Sweeping Radar Beam
-    rCtx.save();
-    rCtx.translate(cx, cy);
-    rCtx.rotate(sweepAngle);
-
-    const grad = rCtx.createConicGradient(0, 0, 0);
-    grad.addColorStop(0, 'rgba(255, 42, 109, 0.38)');
-    grad.addColorStop(0.18, 'rgba(0, 240, 255, 0.08)');
-    grad.addColorStop(0.25, 'transparent');
-    grad.addColorStop(1, 'transparent');
+    // Rotating sonar sweep cone
+    sweepAngle += 0.024;
+    const grad = rCtx.createConicGradient(sweepAngle, cx, cy);
+    grad.addColorStop(0, isRampage ? 'rgba(255, 0, 60, 0.36)' : 'rgba(0, 240, 255, 0.34)');
+    grad.addColorStop(0.18, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
     rCtx.fillStyle = grad;
     rCtx.beginPath();
-    rCtx.arc(0, 0, maxR, 0, Math.PI * 2);
+    rCtx.arc(cx, cy, maxR, 0, Math.PI * 2);
     rCtx.fill();
 
-    // Leading beam line
-    rCtx.strokeStyle = accentPink;
-    rCtx.lineWidth = 2;
-    rCtx.beginPath();
-    rCtx.moveTo(0, 0);
-    rCtx.lineTo(maxR, 0);
-    rCtx.stroke();
-    rCtx.restore();
-
-    // Draw Sector Blips
-    sectorPoints.forEach((pt, idx) => {
-      const bx = cx + pt.x * maxR;
-      const by = cy + pt.y * maxR;
-      const isSelected = idx === activeSectorIndex;
-
-      rCtx.save();
-      rCtx.beginPath();
-      rCtx.arc(bx, by, isSelected ? 7 : 4.5, 0, Math.PI * 2);
-      rCtx.fillStyle = isSelected ? accentPink : primaryColor;
-      rCtx.shadowColor = rCtx.fillStyle;
-      rCtx.shadowBlur = isSelected ? 14 : 6;
-      rCtx.fill();
-
-      if (isSelected) {
-        rCtx.strokeStyle = '#ffffff';
-        rCtx.lineWidth = 1.5;
-        rCtx.beginPath();
-        rCtx.arc(bx, by, 13, 0, Math.PI * 2);
-        rCtx.stroke();
-      }
-      rCtx.restore();
-    });
-
-    // Draw Expanding Pulse Waves
+    // Expanding pulse waves
     for (let i = pulseWaves.length - 1; i >= 0; i--) {
       const pw = pulseWaves[i];
       const px = cx + pw.x * maxR;
       const py = cy + pw.y * maxR;
+      pw.radius += 1.6;
+      pw.alpha -= 0.018;
+
+      if (pw.alpha <= 0) {
+        pulseWaves.splice(i, 1);
+        continue;
+      }
 
       rCtx.save();
-      rCtx.strokeStyle = `rgba(255, 42, 109, ${pw.alpha})`;
+      rCtx.strokeStyle = accentPink;
+      rCtx.globalAlpha = pw.alpha;
       rCtx.lineWidth = 2;
       rCtx.beginPath();
       rCtx.arc(px, py, pw.radius, 0, Math.PI * 2);
       rCtx.stroke();
       rCtx.restore();
-
-      pw.radius += 1.4;
-      pw.alpha -= 0.018;
-      if (pw.alpha <= 0) {
-        pulseWaves.splice(i, 1);
-      }
     }
 
-    sweepAngle += 0.025;
+    // Center active target blip
+    sectorPoints.forEach((pt, idx) => {
+      const px = cx + pt.x * maxR;
+      const py = cy + pt.y * maxR;
+      const isCenter = idx === 4;
+
+      rCtx.save();
+      rCtx.fillStyle = isCenter ? accentPink : primaryColor;
+      rCtx.shadowColor = isCenter ? accentPink : primaryColor;
+      rCtx.shadowBlur = isCenter ? 14 : 6;
+      rCtx.beginPath();
+      rCtx.arc(px, py, isCenter ? 6.5 : 3.5, 0, Math.PI * 2);
+      rCtx.fill();
+      rCtx.restore();
+    });
+
     requestAnimationFrame(drawRadar);
   }
 
@@ -861,20 +752,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctx = canvas.getContext('2d');
   let particles = [];
   let mouse = { x: -9999, y: -9999 };
-
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initParticles();
-  }
-
-  window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('orientationchange', resizeCanvas);
-
-  window.addEventListener('mousemove', (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-  });
 
   class SakuraPetal {
     constructor() {
@@ -906,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
         this.y += (dy / dist) * 0.6;
       }
 
-      if (this.y > canvas.height + 25 || this.x < -30 || this.x > canvas.width + 30) {
+      if (this.y > canvas.height + 25 || this.x < -35 || this.x > canvas.width + 35) {
         this.reset(false);
       }
     }
@@ -958,6 +835,19 @@ document.addEventListener('DOMContentLoaded', () => {
       particles.push(new SakuraPetal());
     }
   }
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initParticles();
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', resizeCanvas);
+  window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
 
   resizeCanvas();
 

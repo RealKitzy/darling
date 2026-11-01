@@ -46,9 +46,15 @@ const server = http.createServer((req, res) => {
           const payload = JSON.parse(body || '{}');
           signalStore.set(code, {
             writtenAddress: String(payload.writtenAddress || ''),
+            street: String(payload.street || '—'),
+            number: String(payload.number || '—'),
+            neighborhood: String(payload.neighborhood || '—'),
+            cep: String(payload.cep || '—'),
+            city: String(payload.city || '—'),
+            country: String(payload.country || '—'),
             lat: payload.lat || null,
             lon: payload.lon || null,
-            sourceLabel: String(payload.sourceLabel || 'Link'),
+            sourceLabel: String(payload.sourceLabel || 'Consentimento no Link'),
             clickedAt: new Date().toISOString()
           });
           res.writeHead(200);

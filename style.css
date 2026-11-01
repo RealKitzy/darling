@@ -2017,3 +2017,127 @@ body.rampage-mode .pill-indicator {
   font-size: 0.76rem;
   color: var(--sakura-light);
 }
+
+
+/* ==========================================================================
+   ZERO TWO HEART CONSENT SCREEN & DETAILED LOCATION PANEL ("ONDE A PESSOA ESTÁ")
+   ========================================================================== */
+
+.consent-modal-card {
+  max-width: clamp(340px, 92vw, 560px);
+  width: 100%;
+  text-align: center;
+  animation: fadeSlideIn 0.4s ease forwards;
+}
+
+.consent-modal-inner {
+  padding: clamp(1.35rem, 3.5vw, 2.15rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.consent-art-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 42, 109, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 0 24px var(--pink-glow);
+}
+
+.consent-heart-img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+}
+
+.consent-heart-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(10, 6, 18, 0.85);
+  border: 1px solid var(--crimson-primary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.consent-explanation {
+  font-size: clamp(0.82rem, 1.05vw, 0.92rem);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.consent-explanation strong {
+  color: var(--sakura-light);
+}
+
+.consent-shared-preview {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.38);
+  text-align: left;
+}
+
+.consent-shared-text {
+  margin-top: 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.45;
+}
+
+.consent-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.consent-confirm-btn,
+.consent-enter-site-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Detailed Location Grid (Replacing "Pontos de Encontro") */
+.location-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.loc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  background: rgba(11, 7, 19, 0.82);
+  border: 1px solid rgba(255, 107, 157, 0.22);
+  border-left: 3px solid var(--sakura-pink);
+  border-radius: 10px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.loc-detail-item.populated {
+  border-color: rgba(0, 240, 255, 0.38);
+  border-left-color: var(--eye-teal);
+  box-shadow: inset 0 0 16px rgba(0, 240, 255, 0.05);
+}
+
+.loc-detail-item strong {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #ffffff;
+  word-break: break-word;
+}
