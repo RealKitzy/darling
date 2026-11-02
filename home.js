@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       langBadge: '🇧🇷 PT-BR',
       navPortalTag: 'PORTAL INICIAL',
       navOverview: 'Visão Geral',
+      navShortener: '🔗 Encurtar Link',
       navEpisodes: 'Episódios',
       navSquad: 'Esquadrão 13',
       navSession: 'Sessão Hash',
@@ -58,6 +59,22 @@ document.addEventListener('DOMContentLoaded', () => {
       metricWhereTag: 'CHAMANDO',
       metricWhereTitle: 'Cadê você ?',
       metricWhereSub: 'Clique para rastrear sinal',
+      metricShortLabel: 'FERRAMENTA // URL',
+      metricShortTag: 'CUSTOMIZAR',
+      metricShortTitle: 'Encurtar Link',
+      metricShortSub: 'Encurte ou personalize o link',
+      shortenerSub: 'FERRAMENTAS // STRELIZIA OS',
+      shortenerTitle: 'ENCURTADOR E PERSONALIZADOR DE LINKS',
+      shortenerBadge: 'MODIFICADOR ATIVO',
+      shortTargetLabel: 'LINK ORIGINAL (URL PARA ENCURTAR OU MODIFICAR)',
+      shortSlugLabel: 'PERSONALIZAR FINAL DO LINK (OPCIONAL — DO SEU JEITO)',
+      shortCreateBtn: '🔗 Encurtar / Modificar Link',
+      shortFillWhereBtn: 'Usar Link do "Cadê você?"',
+      shortResultLabel: 'LINK PERSONALIZADO / ENCURTADO PRONTO:',
+      shortResultStatus: 'ATIVO',
+      shortCopyBtn: 'Copiar Link',
+      shortCopyWithMsgBtn: 'Copiar com Mensagem',
+      shortHistoryTitle: 'LINKS CRIADOS NESTA SESSÃO:',
       epSectionSub: 'ARQUIVO DE MEMÓRIAS // ANIME',
       epSectionTitle: 'EPISÓDIOS EM DESTAQUE',
       ep1Title: 'Sozinho e Solitário',
@@ -107,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
       langBadge: '🇺🇸 EN-US',
       navPortalTag: 'HOME PORTAL',
       navOverview: 'Overview',
+      navShortener: '🔗 Shorten Link',
       navEpisodes: 'Episodes',
       navSquad: 'Squad 13',
       navSession: 'Hash Session',
@@ -139,6 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
       metricWhereTag: 'CALLING',
       metricWhereTitle: 'Where are you?',
       metricWhereSub: 'Click to track signal',
+      metricShortLabel: 'TOOL // URL',
+      metricShortTag: 'CUSTOMIZE',
+      metricShortTitle: 'Shorten Link',
+      metricShortSub: 'Shorten or customize any link',
+      shortenerSub: 'TOOLS // STRELIZIA OS',
+      shortenerTitle: 'LINK SHORTENER & CUSTOMIZER',
+      shortenerBadge: 'MODIFIER ACTIVE',
+      shortTargetLabel: 'ORIGINAL LINK (URL TO SHORTEN OR MODIFY)',
+      shortSlugLabel: 'CUSTOMIZE LINK ENDING (OPTIONAL — YOUR WAY)',
+      shortCreateBtn: '🔗 Shorten / Modify Link',
+      shortFillWhereBtn: 'Use "Where are you?" Link',
+      shortResultLabel: 'CUSTOM / SHORTENED LINK READY:',
+      shortResultStatus: 'ACTIVE',
+      shortCopyBtn: 'Copy Link',
+      shortCopyWithMsgBtn: 'Copy with Message',
+      shortHistoryTitle: 'LINKS CREATED IN THIS SESSION:',
       epSectionSub: 'MEMORY ARCHIVE // ANIME',
       epSectionTitle: 'FEATURED EPISODES',
       ep1Title: 'Alone and Lonesome',
@@ -418,6 +452,218 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = 'index.html';
     }, 500);
   });
+
+  // ==========================================================================
+  // LINK SHORTENER & CUSTOMIZER TOOL LOGIC
+  // ==========================================================================
+  const shortenerForm = document.getElementById('shortener-form');
+  const shortenTargetUrl = document.getElementById('shorten-target-url');
+  const shortenCustomSlug = document.getElementById('shorten-custom-slug');
+  const slugDomainPrefix = document.getElementById('slug-domain-prefix');
+  const fillWhereLinkBtn = document.getElementById('fill-where-link-btn');
+  const shortenerResultBox = document.getElementById('shortener-result-box');
+  const shortenedOutputInput = document.getElementById('shortened-output-input');
+  const copyShortenedBtn = document.getElementById('copy-shortened-btn');
+  const copyShortenedText = document.getElementById('copy-shortened-text');
+  const copyShortenedWithMsgBtn = document.getElementById('copy-shortened-with-msg-btn');
+  const shortenerHistoryList = document.getElementById('shortener-history-list');
+
+  if (slugDomainPrefix && window.location.protocol.startsWith('http')) {
+    slugDomainPrefix.textContent = `${window.location.origin}/s/`;
+  }
+
+  function getLocalShortLinks() {
+    try {
+      return JSON.parse(localStorage.getItem('zeroTwoShortLinks') || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveLocalShortLink(slug, targetUrl) {
+    try {
+      const store = getLocalShortLinks();
+      store[slug] = {
+        slug,
+        targetUrl,
+        createdAt: new Date().toLocaleTimeString('pt-BR')
+      };
+      localStorage.setItem('zeroTwoShortLinks', JSON.stringify(store));
+    } catch {
+      // ignore
+    }
+  }
+
+  // Redirect if opened with ?atalho=SLUG (local file:// fallback)
+  const homeUrlParams = new URLSearchParams(window.location.search);
+  const localSlug = homeUrlParams.get('atalho');
+  if (localSlug) {
+    const store = getLocalShortLinks();
+    if (store[localSlug] && store[localSlug].targetUrl) {
+      window.location.href = store[localSlug].targetUrl;
+    }
+  }
+
+  function renderShortenerHistory() {
+    if (!shortenerHistoryList) return;
+    const store = getLocalShortLinks();
+    const entries = Object.values(store).reverse();
+    shortenerHistoryList.innerHTML = '';
+
+    if (entries.length === 0) {
+      shortenerHistoryList.innerHTML = `<span class="metric-subtext">${
+        currentLang === 'pt' ? 'Nenhum link personalizado criado ainda.' : 'No custom links created yet.'
+      }</span>`;
+      return;
+    }
+
+    entries.forEach((item) => {
+      const baseOrigin = window.location.protocol.startsWith('http')
+        ? `${window.location.origin}/s/${item.slug}`
+        : `${window.location.href.split('?')[0]}?atalho=${item.slug}`;
+
+      const row = document.createElement('div');
+      row.className = 'short-history-item';
+      row.innerHTML = `
+        <div class="short-history-info">
+          <strong>${baseOrigin}</strong>
+          <span>→ ${item.targetUrl}</span>
+        </div>
+        <button type="button" class="hash-action-btn copy-btn" data-copy-url="${baseOrigin}">
+          ${currentLang === 'pt' ? 'Copiar' : 'Copy'}
+        </button>
+      `;
+      row.querySelector('button').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(baseOrigin);
+        } catch {
+          // ignore
+        }
+        showToast(
+          currentLang === 'pt'
+            ? '✅ Link personalizado copiado!'
+            : '✅ Custom link copied!'
+        );
+      });
+      shortenerHistoryList.appendChild(row);
+    });
+  }
+
+  renderShortenerHistory();
+
+  if (fillWhereLinkBtn) {
+    fillWhereLinkBtn.addEventListener('click', () => {
+      const whereBase = window.location.href
+        .split('?')[0]
+        .replace(/home\.html$/i, 'cade-voce.html');
+      const code = '002-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      shortenTargetUrl.value = `${whereBase}?sinal=${code}`;
+      shortenCustomSlug.focus();
+      showToast(
+        currentLang === 'pt'
+          ? '📍 Link do "Cadê você?" preenchido! Agora escolha o nome final ou clique em Encurtar.'
+          : '📍 "Where are you?" link filled! Now pick a custom ending or click Shorten.'
+      );
+    });
+  }
+
+  if (shortenerForm) {
+    shortenerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let targetUrl = shortenTargetUrl.value.trim();
+      if (!targetUrl) {
+        showToast(
+          currentLang === 'pt'
+            ? '⚠️ Cole ou preencha um link para encurtar/modificar.'
+            : '⚠️ Please enter a link to shorten/modify.'
+        );
+        return;
+      }
+
+      if (!/^https?:\/\//i.test(targetUrl) && !/^file:\/\//i.test(targetUrl) && !targetUrl.startsWith('/')) {
+        targetUrl = 'https://' + targetUrl;
+      }
+
+      const cleanSlug = (shortenCustomSlug.value || '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-_]/g, '')
+        .slice(0, 48);
+
+      const finalSlug =
+        cleanSlug || '002-' + Math.random().toString(36).substring(2, 7).toLowerCase();
+
+      saveLocalShortLink(finalSlug, targetUrl);
+
+      let finalShortUrl = window.location.protocol.startsWith('http')
+        ? `${window.location.origin}/s/${finalSlug}`
+        : `${window.location.href.split('?')[0]}?atalho=${finalSlug}`;
+
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const res = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUrl, customSlug: finalSlug })
+          });
+          const data = await res.json();
+          if (data && data.ok && data.shortUrl) {
+            finalShortUrl = data.shortUrl;
+          }
+        } catch {
+          // fallback to local URL
+        }
+      }
+
+      shortenedOutputInput.value = finalShortUrl;
+      shortenerResultBox.classList.remove('hidden');
+      renderShortenerHistory();
+      appendTerminalLog('URL', `${finalShortUrl} -> ${targetUrl}`);
+      showToast(
+        currentLang === 'pt'
+          ? `🔗 Link modificado com sucesso: <strong>${finalShortUrl}</strong>`
+          : `🔗 Link modified successfully: <strong>${finalShortUrl}</strong>`
+      );
+    });
+  }
+
+  if (copyShortenedBtn) {
+    copyShortenedBtn.addEventListener('click', async () => {
+      const val = shortenedOutputInput.value;
+      if (!val) return;
+      try {
+        await navigator.clipboard.writeText(val);
+      } catch {
+        shortenedOutputInput.select();
+        document.execCommand('copy');
+      }
+      copyShortenedText.textContent = currentLang === 'pt' ? 'Copiado!' : 'Copied!';
+      showToast(
+        currentLang === 'pt' ? '✅ Link copiado!' : '✅ Link copied!'
+      );
+      setTimeout(() => {
+        copyShortenedText.textContent = i18n[currentLang].shortCopyBtn;
+      }, 2000);
+    });
+  }
+
+  if (copyShortenedWithMsgBtn) {
+    copyShortenedWithMsgBtn.addEventListener('click', async () => {
+      const val = shortenedOutputInput.value;
+      if (!val) return;
+      const msg = `Clique nesse link para compartilhar os dados no site: ${val}`;
+      try {
+        await navigator.clipboard.writeText(msg);
+      } catch {
+        // ignore
+      }
+      showToast(
+        currentLang === 'pt'
+          ? '✅ Mensagem + Link encurtado copiados!'
+          : '✅ Message + Shortened Link copied!'
+      );
+    });
+  }
 
   // ==========================================================================
   // SAKURA PETALS & HUD PARTICLE CANVAS

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body class="home-body">
   <!-- Animated Sakura & HUD Particle Canvas -->
@@ -160,7 +160,6 @@
               type="text"
               id="generated-share-url"
               class="share-url-input"
-              readonly
               value=""
               aria-label="Mensagem e link gerados para compartilhar"
             />
@@ -171,6 +170,24 @@
               </svg>
               <span id="copy-share-btn-text" data-i18n="copyLinkBtn">Copiar Mensagem + Link</span>
             </button>
+          </div>
+
+          <!-- Inline Link Shortener & Customizer inside "Cadê você?" -->
+          <div class="inline-shortener-box">
+            <label for="inline-custom-slug" class="hud-mono" data-i18n="inlineShortLabel">
+              ENCURTAR OU MODIFICAR O LINK DO SEU JEITO:
+            </label>
+            <div class="hash-display-row">
+              <input
+                type="text"
+                id="inline-custom-slug"
+                class="share-url-input"
+                placeholder="Digite como quer o final do link (ex: zero-two, convite-002) ou deixe vazio para encurtar"
+              />
+              <button type="button" id="inline-shorten-btn" class="hash-action-btn generate-btn">
+                <span data-i18n="inlineShortBtn">🔗 Encurtar / Personalizar</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -305,6 +322,6 @@
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-  <script src="cade-voce.js?v=4"></script>
+  <script src="cade-voce.js?v=5"></script>
 </body>
 </html>

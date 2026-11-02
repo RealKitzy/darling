@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body class="home-body">
   <!-- Animated Sakura & HUD Particle Canvas -->
@@ -92,6 +92,7 @@
       <!-- Navigation Links -->
       <nav class="hud-nav-links" aria-label="Navegação Principal">
         <button type="button" class="nav-tab active" data-target="all" data-i18n="navOverview">Visão Geral</button>
+        <button type="button" class="nav-tab" data-target="shortener-section" data-i18n="navShortener">🔗 Encurtar Link</button>
         <button type="button" class="nav-tab" data-target="episodes-section" data-i18n="navEpisodes">Episódios</button>
         <button type="button" class="nav-tab" data-target="squad-section" data-i18n="navSquad">Esquadrão 13</button>
         <button type="button" class="nav-tab" data-target="terminal-section" data-i18n="navSession">Sessão Hash</button>
@@ -240,6 +241,110 @@
             </svg>
           </span>
         </a>
+
+        <!-- CLICKABLE "ENCURTAR LINK" CARD -->
+        <a href="#shortener-section" class="metric-card metric-card-interactive" id="shortener-quick-card">
+          <div class="metric-top">
+            <span class="hud-mono" data-i18n="metricShortLabel">FERRAMENTA // URL</span>
+            <span class="metric-tag teal" data-i18n="metricShortTag">CUSTOMIZAR</span>
+          </div>
+          <strong class="metric-number" data-i18n="metricShortTitle">Encurtar Link</strong>
+          <span class="metric-subtext metric-cta-link">
+            <span data-i18n="metricShortSub">Encurte ou personalize o link</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </span>
+        </a>
+      </section>
+
+      <!-- ======================================================================
+           LINK SHORTENER & CUSTOMIZER TOOL SECTION
+           ====================================================================== -->
+      <section class="home-section panel-card shortener-panel" id="shortener-section">
+        <div class="section-header">
+          <div>
+            <span class="sub-label" data-i18n="shortenerSub">FERRAMENTAS // STRELIZIA OS</span>
+            <h2 class="section-title" data-i18n="shortenerTitle">ENCURTADOR E PERSONALIZADOR DE LINKS</h2>
+          </div>
+          <span class="metric-tag teal" data-i18n="shortenerBadge">MODIFICADOR ATIVO</span>
+        </div>
+
+        <form id="shortener-form" class="shortener-form" novalidate>
+          <div class="shortener-inputs-grid">
+            <div class="shortener-field">
+              <label for="shorten-target-url" class="hud-mono" data-i18n="shortTargetLabel">
+                LINK ORIGINAL (URL PARA ENCURTAR OU MODIFICAR)
+              </label>
+              <input
+                type="text"
+                id="shorten-target-url"
+                class="shortener-input"
+                placeholder="Cole o link aqui (ou clique em 'Usar Link do Cadê Você')"
+                required
+              />
+            </div>
+
+            <div class="shortener-field">
+              <label for="shorten-custom-slug" class="hud-mono" data-i18n="shortSlugLabel">
+                PERSONALIZAR FINAL DO LINK (OPCIONAL — DO SEU JEITO)
+              </label>
+              <div class="slug-prefix-wrapper">
+                <span class="slug-domain-prefix" id="slug-domain-prefix">/s/</span>
+                <input
+                  type="text"
+                  id="shorten-custom-slug"
+                  class="shortener-input slug-input"
+                  placeholder="ex: zero-two, convite-vip, meu-link"
+                  maxlength="48"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="shortener-actions-row">
+            <button type="submit" class="submit-btn shortener-submit-btn">
+              <span class="btn-glare"></span>
+              <span data-i18n="shortCreateBtn">🔗 Encurtar / Modificar Link</span>
+            </button>
+
+            <button type="button" class="secondary-hud-btn" id="fill-where-link-btn">
+              <span>📍</span>
+              <span data-i18n="shortFillWhereBtn">Usar Link do "Cadê você?"</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Result Box -->
+        <div class="shortener-result-box hidden" id="shortener-result-box">
+          <div class="share-link-header">
+            <span class="hud-mono accent-teal" data-i18n="shortResultLabel">LINK PERSONALIZADO / ENCURTADO PRONTO:</span>
+            <span class="hash-status ready" data-i18n="shortResultStatus">ATIVO</span>
+          </div>
+          <div class="hash-display-row">
+            <input
+              type="text"
+              id="shortened-output-input"
+              class="share-url-input"
+              readonly
+              value=""
+              aria-label="Link encurtado gerado"
+            />
+            <button type="button" id="copy-shortened-btn" class="hash-action-btn copy-btn">
+              <span id="copy-shortened-text" data-i18n="shortCopyBtn">Copiar Link</span>
+            </button>
+            <button type="button" id="copy-shortened-with-msg-btn" class="hash-action-btn generate-btn">
+              <span data-i18n="shortCopyWithMsgBtn">Copiar com Mensagem</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- History of Created Links -->
+        <div class="shortener-history-wrapper" id="shortener-history-wrapper">
+          <span class="hud-mono" data-i18n="shortHistoryTitle">LINKS CRIADOS NESTA SESSÃO:</span>
+          <div class="shortener-history-list" id="shortener-history-list"></div>
+        </div>
       </section>
 
       <!-- FEATURED ANIME EPISODES / ARCHIVES SECTION -->
@@ -398,6 +503,6 @@
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-  <script src="home.js"></script>
+  <script src="home.js?v=5"></script>
 </body>
 </html>

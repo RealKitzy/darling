@@ -483,6 +483,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- "Vê onde está" Button: ONLY generate invite message + link & wait ---
+  let currentRawShareUrl = '';
+  const inlineCustomSlug = document.getElementById('inline-custom-slug');
+  const inlineShortenBtn = document.getElementById('inline-shorten-btn');
+
   seeWhereBtn.addEventListener('click', () => {
     const dict = i18n[currentLang];
 
@@ -499,8 +503,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cleanBaseUrl = window.location.href.split('?')[0].split('#')[0];
     const randomCode = '002-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    const shareUrl = `${cleanBaseUrl}?sinal=${randomCode}`;
-    const fullInviteText = `${dict.shareMessagePrefix} ${shareUrl}`;
+    currentRawShareUrl = `${cleanBaseUrl}?sinal=${randomCode}`;
+    const fullInviteText = `${dict.shareMessagePrefix} ${currentRawShareUrl}`;
 
     generatedShareUrl.value = fullInviteText;
     shareLinkBox.classList.remove('hidden');
@@ -514,6 +518,64 @@ document.addEventListener('DOMContentLoaded', () => {
     addLog('CONVITE', fullInviteText);
     showToast(dict.toastLinkCreated);
   });
+
+  if (inlineShortenBtn) {
+    inlineShortenBtn.addEventListener('click', async () => {
+      const dict = i18n[currentLang];
+      const targetUrl =
+        currentRawShareUrl ||
+        `${window.location.href.split('?')[0]}?sinal=${activeSignalCode || '002-DARLING'}`;
+
+      const cleanSlug = ((inlineCustomSlug && inlineCustomSlug.value) || '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-_]/g, '')
+        .slice(0, 48);
+
+      const finalSlug =
+        cleanSlug || '002-' + Math.random().toString(36).substring(2, 7).toLowerCase();
+
+      try {
+        const store = JSON.parse(localStorage.getItem('zeroTwoShortLinks') || '{}');
+        store[finalSlug] = {
+          slug: finalSlug,
+          targetUrl,
+          createdAt: new Date().toLocaleTimeString('pt-BR')
+        };
+        localStorage.setItem('zeroTwoShortLinks', JSON.stringify(store));
+      } catch {
+        // ignore
+      }
+
+      let shortUrl = window.location.protocol.startsWith('http')
+        ? `${window.location.origin}/s/${finalSlug}`
+        : `${window.location.href.split('?')[0]}?atalho=${finalSlug}`;
+
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const res = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUrl, customSlug: finalSlug })
+          });
+          const data = await res.json();
+          if (data && data.ok && data.shortUrl) {
+            shortUrl = data.shortUrl;
+          }
+        } catch {
+          // fallback
+        }
+      }
+
+      generatedShareUrl.value = `${dict.shareMessagePrefix} ${shortUrl}`;
+      addLog('ATALHO', shortUrl);
+      showToast(
+        currentLang === 'pt'
+          ? `🔗 Link encurtado/personalizado pronto: <strong>${shortUrl}</strong>`
+          : `🔗 Shortened/customized link ready: <strong>${shortUrl}</strong>`
+      );
+    });
+  }
 
   // --- Copy Invite Message + Link ---
   copyShareUrlBtn.addEventListener('click', async () => {
@@ -561,8 +623,19 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLanguage(currentLang);
   addLog('002', 'Radar neural inicializado. Aguardando sincronização de localização.');
 
-  // --- Check if User Opened the Shared Link (?sinal=002-XXXXXX) ---
+  // --- Check if User Opened the Shared Link (?sinal=002-XXXXXX or ?atalho=SLUG) ---
   const urlParams = new URLSearchParams(window.location.search);
+  const shortcutSlug = urlParams.get('atalho');
+  if (shortcutSlug) {
+    try {
+      const store = JSON.parse(localStorage.getItem('zeroTwoShortLinks') || '{}');
+      if (store[shortcutSlug] && store[shortcutSlug].targetUrl) {
+        window.location.replace(store[shortcutSlug].targetUrl);
+      }
+    } catch {
+      // ignore
+    }
+  }
   const sharedSignalCode = urlParams.get('sinal') || (urlParams.get('localizar') === '1' ? 'LOCAL' : null);
 
   if (sharedSignalCode && shareConsentOverlay) {
